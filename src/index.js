@@ -1,6 +1,8 @@
 import express from "express";
 import { config } from "dotenv"
-import { connectDB, sequelize } from "./app/models/db";
+import {sequelize } from "./app/models/db";
+
+
 import cors from "cors";
 // import initUser from "./app/controllers/user.controller";
 
@@ -16,15 +18,26 @@ const port = process.env.PORT || 8080;
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(cors());
+//api 
 
 // initNhanVien(app);
 // initUserRoute(app);
 // initUser(app);
 
+
 app.listen(port, async () => {
   console.log("🚀Server started Successfully! Running in port " + port);
-  await connectDB();
-  sequelize.sync({ force: false }).then(() => {
-    console.log("✅Synced database successfully...");
+  sequelize
+  .authenticate()
+  .then(() => {
+      console.log('Connected to SQL database:');
+  })
+  .catch((err) => {
+      console.error('Unable to connect to SQL database:');
   });
+  (async () => {
+      await sequelize.sync();
+      console.log('----server start', new Date().toLocaleString('en-US', { timeZone: 'Asia/Jakarta' }));
+      console.log('----server process');
+  })();
 });
