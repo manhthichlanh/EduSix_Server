@@ -2,9 +2,7 @@
 import CONFIG from '../configs/db.config.js';
 import fs from 'fs';
 import path from 'path';
-import Sequelize from 'sequelize';
-
-const basename = path.basename(__filename);
+import { Sequelize, DataTypes } from 'sequelize';
 // const db = {};
 console.log('CONFIG---', CONFIG);
 
@@ -22,8 +20,4 @@ const sequelize = new Sequelize(CONFIG.db_name, CONFIG.db_user, CONFIG.db_passwo
     timezone: '+07:00', //for writing to the database
     logging: false
 });
-
-// db.sequelize = sequelize;
-// db.Sequelize = Sequelize;
-
 export default sequelize;

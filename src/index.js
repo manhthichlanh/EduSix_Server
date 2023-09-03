@@ -1,6 +1,6 @@
 import express from "express";
 import { config } from "dotenv"
-import sequelize  from "./app/models/db";
+import sequelize from "./app/models/db";
 
 import cors from "cors";
 // import initUser from "./app/controllers/user.controller";
@@ -22,21 +22,20 @@ app.use(cors());
 // initNhanVien(app);
 // initUserRoute(app);
 // initUser(app);
-
+sequelize
+.authenticate()
+.then(() => {
+    console.log('Connected to SQL database:');
+})
+.catch((err) => {
+    console.error('Unable to connect to SQL database:');
+});
+(async () => {
+await sequelize.sync();
+console.log('----server start', new Date().toLocaleString('en-US', { timeZone: 'Asia/Jakarta' }));
+console.log('----server process');
+})();
 
 app.listen(port, async () => {
-  console.log("🚀Server started Successfully! Running in port " + port);
-  sequelize
-  .authenticate()
-  .then(() => {
-      console.log('Connected to SQL database:');
-  })
-  .catch((err) => {
-      console.error('Unable to connect to SQL database:');
-  });
-  (async () => {
-      await sequelize.sync();
-      console.log('----server start', new Date().toLocaleString('en-US', { timeZone: 'Asia/Jakarta' }));
-      console.log('----server process');
-  })();
+    console.log("🚀Server started Successfully! Running in port " + port);
 });
