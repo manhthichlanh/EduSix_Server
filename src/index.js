@@ -1,7 +1,6 @@
 import express from "express";
 import { config } from "dotenv"
-import {sequelize } from "./app/models/db";
-
+import sequelize  from "./app/models/db";
 
 import cors from "cors";
 // import initUser from "./app/controllers/user.controller";
