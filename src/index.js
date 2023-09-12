@@ -2,18 +2,24 @@ import express from "express";
 import { config } from "dotenv"
 import sequelize from "./app/models/db";
 import cors from "cors";
+import bodyParser from "body-parser";
 // import initUser from "./app/controllers/user.controller";
 // import globalErrHandler from './app/controllers/errorController.js';
-import initApiV1 from "./routes/api_v1.route"
+import initApiV1 from "./routes/api_v1.route";
 const app = express();
 //Config .env file
 config();
 //Config .env file
 
+//body parser 
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json());
+//body parser 
+
 initApiV1(app)
 
 const port = process.env.PORT || 8080;
-app.use(express.urlencoded({ extended: true }));
+// app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(cors());
 //api 

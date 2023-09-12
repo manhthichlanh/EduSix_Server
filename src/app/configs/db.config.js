@@ -4,7 +4,7 @@ dotenv.config();
 
 const CONFIG = {
   app: process.env.APP || 'dev',
-  port: process.env.PORT || '5000',
+  port: process.env.DB_PORT || '5000',
   host: process.env.HOST || 'http://localhost',
   db_dialect: process.env.DB_DIALECT || 'mysql',
   db_host: process.env.DB_HOST || 'localhost',

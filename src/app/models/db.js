@@ -1,7 +1,6 @@
 'use strict';
 import CONFIG from '../configs/db.config.js';
-import fs from 'fs';
-import path from 'path';
+
 import { Sequelize, DataTypes } from 'sequelize';
 // const db = {};
 console.log('CONFIG---', CONFIG);
