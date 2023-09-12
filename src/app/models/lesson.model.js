@@ -38,10 +38,8 @@ const LessonModel = sequelize.define("lesson", {
     ordinal_number: {
         type: DataTypes.INTEGER
     },
-    updatedAt: {
-        type: DataTypes.DATE,
-        allowNull: false
-    }
+} ,{
+    timestamps: true
 });
 LessonModel.sync().then(() => {
     console.log('Lesson table created successfully!');

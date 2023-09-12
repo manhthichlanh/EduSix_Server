@@ -30,11 +30,11 @@ const CourseModel = sequelize.define("course", {
         allowNull: false
     },
     status: {
-        type: DataTypes.BOOLEAN,
+        type: DataTypes.INTEGER,
         allowNull: false
     },
     type: {
-        type: DataTypes.BOOLEAN,
+        type: DataTypes.INTEGER,
         allowNull: false
     },
     thumbnail: {
@@ -43,12 +43,12 @@ const CourseModel = sequelize.define("course", {
     },
     total_course_time: {
         type: DataTypes.DATE
-    },
-    updatedAt: {
-        type: DataTypes.DATE,
-        allowNull: false
     }
+
+}, {
+    timestamps: true
 });
+
 CourseModel.sync().then(() => {
     console.log('Course table created successfully!');
 }).catch((error) => {

@@ -43,16 +43,8 @@ const userModel = sequelize.define("users", {
     allowNull: false,
     defaultValue: 'user', // Giá trị mặc định là 'user'
   },
-  created_at: {
-    type: DataTypes.DATE,
-    allowNull: false,
-    defaultValue: DataTypes.NOW,
-  },
-  updated_at: {
-    type: DataTypes.DATE,
-    allowNull: false,
-    defaultValue: DataTypes.NOW,
-  },
+}, {
+  timestamps: true
 });
 userModel.sync().then(() => {
   console.log('User table created successfully!');
