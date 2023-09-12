@@ -122,12 +122,13 @@ export const create = async (req, res) => {
 }
 export const getAllUser = async (req, res) => {
     try {
-        const nhanvien = await userModel.findAll();
+        const nhanvien = await userModel.findAll({});
         res.json(nhanvien)
     } catch (error) {
         console.log(error);
         res.sendStatus(501)
     }
+
 }
 export const updateUser = async (req, res) => {
     const userId = req.params.id;
