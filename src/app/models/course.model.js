@@ -1,6 +1,7 @@
 import sequelize from "./db.js";
 import { DataTypes } from 'sequelize';
 // import { sequelize, DataTypes }from 'sequelize';
+import LessonModel from "./lesson.model.js";
 const CourseModel = sequelize.define("course", {
     // Định nghĩa các trường trong bảng Users
     course_id: {
@@ -46,7 +47,8 @@ const CourseModel = sequelize.define("course", {
     }
 
 }, {
-    timestamps: true
+    createdAt: "created_at",
+    updatedAt: "updated_at"
 });
 
 CourseModel.sync().then(() => {
@@ -54,4 +56,6 @@ CourseModel.sync().then(() => {
 }).catch((error) => {
     console.error('Unable to create table : ', error);
 });
+// LessonModel.hasMany(CourseModel, { foreignKey: 'course_id' });
+
 export default CourseModel;
