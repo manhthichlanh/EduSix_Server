@@ -85,9 +85,9 @@ export const updateUser = async (req, res) => {
         generatePassword(password)
             .then(
                 (hashedPassword) => {
-                    const result = await userModel.update(
+                    const result = userModel.update(
                         {
-                            fullname, avatar, nickname, email, phone, address, password, active, role, update_at: Date.now()
+                            fullname, avatar, nickname, email, phone, address, password: hashedPassword, active, role, update_at: Date.now()
                         },
                         {
                             where: {
@@ -108,19 +108,23 @@ export const updateUser = async (req, res) => {
                     });
                 }
             })
+
+            .then(
+                async () => {
+                    const user = await userModel.findByPk(userId);
+
+                    res.status(200).json({
+                        status: "success",
+                        user
+                    });
+                }
+
+            )
             .catch((err) => {
-              console.log(err)
+                console.log(err)
             }
             )
 
-
-
-        const user = await userModel.findByPk(userId);
-
-        res.status(200).json({
-            status: "success",
-            user
-        });
     } catch (error) {
         console.log(error);
         res.sendStatus(501)
