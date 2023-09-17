@@ -40,95 +40,85 @@ export const getCourseById = async (req, res) => {
     }
 };
 export const createUser = async (req, res) => {
-    try {
-        const { fullname, avatar, nickname, email, phone, address, password, active, role } = req.body;
+
+    const { fullname, avatar, nickname, email, phone, address, password, active, role } = req.body;
+
+    generatePassword(password)
+        .then(
+            (hashedPassword) => {
+                const user = userModel.create(
+                    { fullname, avatar, nickname, email, phone, address, password: hashedPassword, active, role }
+                )
+                return user
+            }
+        )
+
+        .then(
+            (user) => {
+                res.status(201).json({
+                    status: "success",
+                    user,
+
+                });
+            }
+        )
+        .catch(
+            (err) => {
+                res.sendStatus(501);
+                console.log(err);
+            }
+        )
 
 
-        generatePassword(password)
-            .then(
-                (hashedPassword) => {
-                    const user = userModel.create(
-                        { fullname, avatar, nickname, email, phone, address, password: hashedPassword, active, role }
-                    )
-                    return user
-                }
-            )
 
-            .then(
-                (user) => {
-                    res.status(201).json({
-                        status: "success",
-                        user,
-
-                    });
-                }
-            )
-            .catch(
-                (err) => {
-                    res.sendStatus(501);
-                    console.log(err);
-                }
-            )
-
-
-    } catch (error) {
-        res.sendStatus(501);
-        console.log(error);
-    }
 }
 export const updateUser = async (req, res) => {
     const userId = req.params.id;
 
-    try {
-        const { fullname, avatar, nickname, email, phone, address, password, active, role } = req.body;
+    const { fullname, avatar, nickname, email, phone, address, password, active, role } = req.body;
 
-        generatePassword(password)
-            .then(
-                (hashedPassword) => {
-                    const result = userModel.update(
-                        {
-                            fullname, avatar, nickname, email, phone, address, password: hashedPassword, active, role, update_at: Date.now()
+    generatePassword(password)
+        .then(
+            (hashedPassword) => {
+                const result = userModel.update(
+                    {
+                        fullname, avatar, nickname, email, phone, address, password: hashedPassword, active, role, update_at: Date.now()
+                    },
+                    {
+                        where: {
+                            user_id: userId,
                         },
-                        {
-                            where: {
-                                user_id: userId,
-                            },
-                        },
+                    },
 
-                    );
-                    return result
-                }
-
-            )
-            .then(() => {
-                if (result[0] === 0) {
-                    return res.status(404).json({
-                        status: "fail",
-                        message: "Không tìm thấy ID của người dùng",
-                    });
-                }
-            })
-
-            .then(
-                async () => {
-                    const user = await userModel.findByPk(userId);
-
-                    res.status(200).json({
-                        status: "success",
-                        user
-                    });
-                }
-
-            )
-            .catch((err) => {
-                console.log(err)
+                );
+                return result
             }
-            )
 
-    } catch (error) {
-        console.log(error);
-        res.sendStatus(501)
-    }
+        )
+        .then(() => {
+            if (result[0] === 0) {
+                return res.status(404).json({
+                    status: "fail",
+                    message: "Không tìm thấy ID của người dùng",
+                });
+            }
+        })
+
+        .then(
+            async () => {
+                const user = await userModel.findByPk(userId);
+
+                res.status(200).json({
+                    status: "success",
+                    user
+                });
+            }
+
+        )
+        .catch((err) => {
+            console.log(err);
+            res.sendStatus(501)
+        })
 }
 
 export const deleteCourse = async (req, res) => {
