@@ -3,6 +3,7 @@ import { config } from "dotenv"
 import sequelize from "./app/models/db";
 import cors from "cors";
 import bodyParser from "body-parser";
+import './app/models/associations'
 // import initUser from "./app/controllers/user.controller";
 // import globalErrHandler from './app/controllers/errorController.js';
 import initApiV1 from "./routes/api_v1.route";
