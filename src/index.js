@@ -4,7 +4,7 @@ import sequelize from "./app/models/db";
 import cors from "cors";
 import bodyParser from "body-parser";
 // import initUser from "./app/controllers/user.controller";
-// import globalErrHandler from './app/controllers/errorController.js';
+import globalErrHandler from './app/controllers/errorController.js';
 import initApiV1 from "./routes/api_v1.route";
 const app = express();
 //Config .env file
@@ -27,13 +27,13 @@ app.use(cors());
 // initNhanVien(app);
 // initUserRoute(app);
 // initUser(app);
-//error handler
+// error handler
 // handle undefined Routes
-// app.use('*', (req, res, next) => {
-//     const err = new AppError(404, 'fail', 'undefined route');
-//     next(err, req, res, next);
-// });
-// app.use(globalErrHandler);
+app.use('*', (req, res, next) => {
+    const err = new AppError(404, 'fail', 'undefined route');
+    next(err, req, res, next);
+});
+app.use(globalErrHandler);
 //connect db
 sequelize
     .authenticate()
