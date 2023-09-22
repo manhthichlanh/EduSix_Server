@@ -28,7 +28,7 @@ const SectionModel = sequelize.define("section", {
     }
 });
 SectionModel.sync().then(() => {
-    console.log('Lesson table created successfully!');
+    console.log('Seaction table created successfully!');
 }).catch((error) => {
     console.error('Unable to create table : ', error);
 });

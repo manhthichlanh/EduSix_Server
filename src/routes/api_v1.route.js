@@ -1,10 +1,10 @@
 import initCourseRoute from "./course.route";
 import initSectionRoute from "./section.route";
 import initUserRoute from "./user.route";
-import initVideoRoute from "./video.route";
+import initSectionRoute from "./section.router";
 export default function initApiV1(app) {
     initCourseRoute(app)
     initSectionRoute(app)
     initUserRoute(app)
-    initVideoRoute(app)
+    initSectionRoute(app)
 }
