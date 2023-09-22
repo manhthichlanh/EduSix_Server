@@ -19,11 +19,6 @@ const videoModel = sequelize.define("video", {
     type: DataTypes.STRING, // Có thể sử dụng STRING hoặc INTEGER tùy theo cách bạn lưu trữ
     comment: "Đây là phần id của đường dẫn youtube ví ?v=...",
   },
-  course_id: {
-    type: DataTypes.INTEGER,
-    unique: true,
-    comment: "Video của phần mở đầu course (nếu có)",
-  },
   duration: {
     type: DataTypes.INTEGER,
     comment: "Tính theo giây(s)",

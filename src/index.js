@@ -36,6 +36,7 @@ app.use(cors());
 // });
 // app.use(globalErrHandler);
 //connect db
+
 sequelize
     .authenticate()
     .then(() => {
