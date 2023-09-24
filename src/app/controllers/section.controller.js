@@ -1,13 +1,17 @@
-import SectionModel from "../models/course.model";
+import SectionModel from "../models/section.model";
 
 export const createSection = async (req, res) => {
     try {
+        if (!req.body.course_id) {
+            return res.status(400).json({ error: 'course_id is required and cannot be null.' });
+        }
         const newRecord = await SectionModel.create(req.body);
         res.status(201).json(newRecord);
     } catch (error) {
         res.status(400).json({ error: error.message });
     }
 };
+
 export const getAllSection = async (req, res) => {
     try {
         const records = await SectionModel.findAll();
