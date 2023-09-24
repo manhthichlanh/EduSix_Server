@@ -2,7 +2,7 @@ import { Router } from "express";
 let router = Router();
 import * as initSection from "../app/controllers/section.controller"
 export default function initSectionRoute(app) {
-    router.get("/", initSection.getAllSection)
+    router.get("/", initSection.getAllsection)
     // router.get("/:id", initSection.getCourseById)
     router.post("/", initSection.createSection)
     // router.delete("/:id", initSection.deleteCourse)

@@ -1,6 +1,6 @@
 import SectionModel from "../models/section.model";
 
-export const createSection = async (req, res) => {
+export const getAllsection = async (req, res, next) => {
     try {
         if (!req.body.course_id) {
             return res.status(400).json({ error: 'course_id is required and cannot be null.' });
@@ -20,43 +20,63 @@ export const getAllSection = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 };
+export const getSectionById = async (req,res,next) => {
+    const section_id = req.params.section_id;
+    const sectionDoc = await SectionModel.findByPk(section_id);
+    return ReS(res, { sectionDoc  }, 404);
 
-export const getCourseById = async (req, res) => {
+}
+export const createSection = async (req,res,next) => {
+    const {name,status,ordinal_number}  =req.body;
+    const SeactionDoc = await SectionModel.create({name,status,ordinal_number,course_id:1});
+      return ReS(res, { SeactionDoc  }, 404);
+
+}
+export const updateSection = async (req, res, next) => {
+    const section_id = req.params.section_id; // Correct the way to get 'section_id' from the request parameters
+    const { name, status, ordinal_number } = req.body;
+
     try {
-        const record = await SectionModel.findByPk(req.params.id);
-        if (!record) {
-            res.status(404).json({ error: 'Record not found' });
-        } else {
-            res.status(200).json(record);
+        // Find the section by 'section_id'
+        const section = await SectionModel.findByPk(section_id);
+
+        if (!section) {
+            return res.status(404).json({ message: 'Section not found' });
         }
+
+        // Update section attributes
+        section.name = name;
+        section.status = status;
+        section.ordinal_number = ordinal_number;
+
+        // Save the updated section
+      const sectionSave =   await section.save();
+
+   
+        return ReS(res, { sectionSave   }, 404);
+   
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        next(error);
     }
 };
-export const updateCourse = async (req, res) => {
-  try {
-      const record = await SectionModel.findByPk(req.params.id);
-      if (!record) {
-          res.status(404).json({ error: 'Record not found' });
-      } else {
-          await record.update(req.body);
-          res.status(200).json({ message: "Course updated successfully", data: record });  // Added success message
-      }
-  } catch (error) {
-      res.status(400).json({ error: error.message });
-  }
-};
+export const deleteSection = async (req, res, next) => {
+    const section_id = req.params.section_id; // Correct the way to get 'section_id' from the request parameters
 
-export const deleteCourse = async (req, res) => {
-  try {
-      const record = await SectionModel.findByPk(req.params.id);
-      if (!record) {
-          res.status(404).json({ error: 'Record not found' });
-      } else {
-          await record.destroy();
-          res.status(200).json({ message: 'Course deleted successfully!' }); 
-      }
-  } catch (error) {
-      res.status(500).json({ error: error.message });
-  }
+    try {
+        // Find the section by 'section_id'
+        const section = await SectionModel.findByPk(section_id);
+
+        if (!section) {
+            return res.status(404).json({ message: 'Section not found' });
+        }
+
+        // Delete the section
+        await section.destroy();
+
+       
+        return ReS(res,{ message: 'Section deleted successfully' }, 404);
+
+    } catch (error) {
+        next(error);
+    }
 };

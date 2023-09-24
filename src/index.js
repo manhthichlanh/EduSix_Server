@@ -3,9 +3,9 @@ import { config } from "dotenv"
 import sequelize from "./app/models/db";
 import cors from "cors";
 import bodyParser from "body-parser";
+
 import './app/models/associations'
 // import initUser from "./app/controllers/user.controller";
-// import globalErrHandler from './app/controllers/errorController.js';
 import initApiV1 from "./routes/api_v1.route";
 const app = express();
 //Config .env file
@@ -13,9 +13,12 @@ config();
 //Config .env file
 
 //body parser 
-app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 //body parser 
+
+
+
 
 initApiV1(app)
 
@@ -28,13 +31,12 @@ app.use(cors());
 // initNhanVien(app);
 // initUserRoute(app);
 // initUser(app);
-//error handler
+// error handler
 // handle undefined Routes
-// app.use('*', (req, res, next) => {
-//     const err = new AppError(404, 'fail', 'undefined route');
-//     next(err, req, res, next);
-// });
-// app.use(globalErrHandler);
+app.use('*', (req, res, next) => {
+    const err = new AppError(404, 'fail', 'undefined route');
+    next(err, req, res, next);
+});
 //connect db
 
 sequelize
@@ -44,6 +46,7 @@ sequelize
     })
     .catch((err) => {
         console.error('Unable to connect to SQL database:');
+        console.log(err)
     });
 
 (async () => {
