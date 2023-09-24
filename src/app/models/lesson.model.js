@@ -16,7 +16,7 @@ const LessonModel = sequelize.define("lesson", {
     section_id: {
         type: DataTypes.INTEGER,
     },
-    title: {
+    name: {
         type: DataTypes.STRING,
 
     },

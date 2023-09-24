@@ -45,6 +45,7 @@ const userModel = sequelize.define("users", {
   createdAt: "created_at",
   updatedAt: "updated_at"
 });
+
 userModel.sync().then(() => {
   console.log('User table created successfully!');
 }).catch((error) => {

@@ -11,7 +11,7 @@ const CONFIG = {
   db_port: process.env.DB_PORT || '3306',
   db_name: process.env.DB_NAME || 'web_udemy',
   db_user: process.env.DB_USER || 'root',
-  db_password: process.env.DB_PASSWORD || 'haid5122003',
+  db_password: process.env.DB_PASSWORD || '',
   timezone: process.env.TIMEZONE || '+07:00',
 };
 

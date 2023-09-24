@@ -22,7 +22,7 @@ const CourseModel = sequelize.define("course", {
         allowNull: false,
 
     },
-    title: {
+    slug: {
         type: DataTypes.STRING,
 
     },
@@ -56,6 +56,4 @@ CourseModel.sync().then(() => {
 }).catch((error) => {
     console.error('Unable to create table : ', error);
 });
-// LessonModel.hasMany(CourseModel, { foreignKey: 'course_id' });
-
 export default CourseModel;

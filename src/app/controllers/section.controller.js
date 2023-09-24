@@ -1,15 +1,23 @@
-const fs = require('fs');
-import  SectionModel  from "../models/section.model";
-import { errorCode } from '../../utils/util.helper';
-import { ReE, ReS } from '../../utils/util.service';
+import SectionModel from "../models/section.model";
 
-import { getAllSection} from '../dao/section.dao';
 export const getAllsection = async (req, res, next) => {
     try {
-        const sectionDoc  = await getAllSection();
-        return ReS(res, { section: sectionDoc }, 200);
+        if (!req.body.course_id) {
+            return res.status(400).json({ error: 'course_id is required and cannot be null.' });
+        }
+        const newRecord = await SectionModel.create(req.body);
+        res.status(201).json(newRecord);
     } catch (error) {
-        next(error);
+        res.status(400).json({ error: error.message });
+    }
+};
+
+export const getAllSection = async (req, res) => {
+    try {
+        const records = await SectionModel.findAll();
+        res.status(200).json(records);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
     }
 };
 export const getSectionById = async (req,res,next) => {
