@@ -50,7 +50,6 @@ const CourseModel = sequelize.define("course", {
     createdAt: "created_at",
     updatedAt: "updated_at"
 });
-
 CourseModel.sync({force: true}).then(() => {
     console.log('Course table created successfully!');
 }).catch((error) => {
