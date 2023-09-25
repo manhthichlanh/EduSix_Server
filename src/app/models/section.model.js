@@ -21,7 +21,7 @@ const SectionModel = sequelize.define("section", {
             model: CourseModel,
             key: 'course_id'
         }
-
+        
     },
     status: {
         type: DataTypes.BOOLEAN,
