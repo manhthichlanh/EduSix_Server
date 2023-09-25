@@ -9,10 +9,6 @@ const LessonModel = sequelize.define("lesson", {
         primaryKey: true,
         autoIncrement: true
     },
-    course_id: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-    },
     section_id: {
         type: DataTypes.INTEGER,
     },
