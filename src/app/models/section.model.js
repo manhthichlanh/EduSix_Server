@@ -4,7 +4,7 @@ import { DataTypes } from 'sequelize';
 // import { sequelize, DataTypes }from 'sequelize';
 const SectionModel = sequelize.define("section", {
     // Định nghĩa các trường trong bảng Section
-    id: {
+    section_id: {
         type: DataTypes.INTEGER,
         allowNull: false,
         primaryKey: true,
