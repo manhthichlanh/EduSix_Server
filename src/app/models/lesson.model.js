@@ -3,7 +3,7 @@ import { DataTypes } from 'sequelize';
 // import { sequelize, DataTypes }from 'sequelize';
 const LessonModel = sequelize.define("lesson", {
     // Định nghĩa các trường trong bảng Lesson
-    lession_id: {
+    lesson_id: {
         type: DataTypes.INTEGER,
         allowNull: false,
         primaryKey: true,
@@ -11,6 +11,7 @@ const LessonModel = sequelize.define("lesson", {
     },
     section_id: {
         type: DataTypes.INTEGER,
+        allowNull: true
     },
     name: {
         type: DataTypes.STRING,

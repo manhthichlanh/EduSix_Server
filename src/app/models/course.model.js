@@ -1,7 +1,7 @@
 import sequelize from "./db.js";
 import { DataTypes } from 'sequelize';
 // import { sequelize, DataTypes }from 'sequelize';
-import LessonModel from "./lesson.model.js";
+// import LessonModel from "./lesson.model.js";
 const CourseModel = sequelize.define("course", {
     // Định nghĩa các trường trong bảng Users
     course_id: {
