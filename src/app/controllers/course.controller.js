@@ -1,4 +1,5 @@
 import CourseModel from "../models/course.model";
+import SectionModel from "../models/section.model";
 
 export const createCourse = async (req, res) => {
     try {
@@ -16,7 +17,6 @@ export const getAllCourse = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 };
-
 export const getCourseById = async (req, res) => {
     try {
         const record = await CourseModel.findByPk(req.params.id);
@@ -25,6 +25,20 @@ export const getCourseById = async (req, res) => {
         } else {
             res.status(200).json(record);
         }
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+export const getSectionCountByCourseId = async (req, res) => {
+    try {
+        const courseId = req.params.id;
+
+        // Sử dụng phương thức `count` để đếm số lượng sections của course có courseId tương ứng
+        const sectionCount = await SectionModel.count({
+            where: { course_id: courseId }
+        });
+
+        res.status(200).json({ sectionCount });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
