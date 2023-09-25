@@ -5,8 +5,5 @@ import LessonModel from './lesson.model';
 
 CourseModel.hasMany(SectionModel, { foreignKey: 'course_id' });
 SectionModel.belongsTo(CourseModel, { foreignKey: 'course_id' });
-
-
-
-SectionModel.hasMany(LessonModel, { foreignKey:'section_id'});
-LessonModel.belongsTo(SectionModel, { foreignKey:'section_id'});
+SectionModel.hasMany(LessonModel, { foreignKey: 'section_id' });
+LessonModel.belongsTo(SectionModel, { foreignKey: 'section_id' });

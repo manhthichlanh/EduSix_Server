@@ -1,4 +1,3 @@
-import CourseModel from "./course.model.js";
 import sequelize from "./db.js";
 import { DataTypes } from 'sequelize';
 // import { sequelize, DataTypes }from 'sequelize';

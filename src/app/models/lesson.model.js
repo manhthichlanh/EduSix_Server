@@ -1,3 +1,4 @@
+import SectionModel from "./section.model.js";
 import sequelize from "./db.js";
 import { DataTypes } from 'sequelize';
 // import { sequelize, DataTypes }from 'sequelize';
@@ -11,7 +12,11 @@ const LessonModel = sequelize.define("lesson", {
     },
     section_id: {
         type: DataTypes.INTEGER,
-        allowNull: true
+        allowNull: false,
+        // references: {
+        //     model: SectionModel,
+        //     key: 'section_id'
+        // }
     },
     name: {
         type: DataTypes.STRING,
