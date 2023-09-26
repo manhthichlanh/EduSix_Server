@@ -1,9 +1,10 @@
+import SectionModel from "./section.model.js";
 import sequelize from "./db.js";
 import { DataTypes } from 'sequelize';
 // import { sequelize, DataTypes }from 'sequelize';
 const LessonModel = sequelize.define("lesson", {
     // Định nghĩa các trường trong bảng Lesson
-    id: {
+    lesson_id: {
         type: DataTypes.INTEGER,
         allowNull: false,
         primaryKey: true,
@@ -11,8 +12,13 @@ const LessonModel = sequelize.define("lesson", {
     },
     section_id: {
         type: DataTypes.INTEGER,
+        allowNull: false,
+        references: {
+            model: SectionModel,
+            key: 'section_id'
+        }
     },
-    title: {
+    name: {
         type: DataTypes.STRING,
 
     },
@@ -38,9 +44,9 @@ const LessonModel = sequelize.define("lesson", {
     ordinal_number: {
         type: DataTypes.INTEGER
     },
-} ,{
-    timestamps: true
-});
+}, {
+    createdAt: "created_at",
+    updatedAt: "updated_at"});
 LessonModel.sync().then(() => {
     console.log('Lesson table created successfully!');
 }).catch((error) => {

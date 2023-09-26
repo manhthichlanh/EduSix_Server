@@ -1,12 +1,14 @@
 import { Router } from "express";
-let router = Router();
-import * as initSection from "../app/controllers/section.controller"
-export default function initCourseRoute(app) {
-    router.get("/", initSection.getAllsection);
-    router.get("/:section_id", initSection.getSectionById);
+import * as initSection from "../app/controllers/section.controller";
 
-    router.post("/createSection", initSection.createSection);
-    router.put("/updateSection/:section_id", initSection.updateSection);
-    router.delete("/deleteSection/:section_id", initSection.deleteSection)
+const router = Router();
+
+export default function initSectionRoute(app) {
+    router.get("/", initSection.getAllSection);
+    router.get("/:id/course", initSection.getSectionCourse);
+    router.get("/:id", initSection.getSectionById);
+    router.post("/", initSection.createSection);
+    router.delete("/:id", initSection.deleteSection);
+    router.put("/:id", initSection.updateSection);
     app.use("/section", router);
 }

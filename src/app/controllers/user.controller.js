@@ -1,125 +1,21 @@
 import userModel from "../models/user.model";
-// const initUser = (app) => {
-//     app.get("/user", async (req, res) => {
-//         try {
-//             const nhanvien = await userModel.findAll();
-//             res.json(nhanvien)
-//         } catch (error) {
-//             console.log(error);
-//             res.sendStatus(501)
-//         }
-//     })
+import bcrypt from "bcrypt";
 
-//     app.post("/user", async (req, res) => {
-//         try {
-//             const { hoten, ngaysinh, phongban, chucvu, phone, email } = req.body
-//             const user = await userModel.create(
-//                 {
-//                     hoten,
-//                     ngaysinh,
-//                     phongban,
-//                     chucvu,
-//                     phone,
-//                     email
-//                 })
+const generatePassword = (password) => {
+    return new Promise((resolve, reject) => {
+        const saltRounds = 10; // Số lượng vòng lặp băm (tăng độ an toàn)
 
-//             res.status(201).json({
-//                 status: "success",
-//                 user,
-
-//             });
-//         } catch (error) {
-//             console.log(error);
-//             res.sendStatus(501)
-//         }
-//     })
-//     app.put("/user/:id", async (req, res) => {
-//         const userId = req.params.id;
-
-//         try {
-//             const { hoten, ngaysinh, phongban, chucvu, phone, email } = req.body;
-
-//             const result = await userModel.update(
-//                 {
-//                     hoten,
-//                     ngaysinh,
-//                     phongban,
-//                     chucvu,
-//                     phone,
-//                     email,
-//                     updatedAt: Date.now()
-//                 },
-//                 {
-//                     where: {
-//                         id: userId,
-//                     },
-//                 }
-//             );
-
-//             if (result[0] === 0) {
-//                 return res.status(404).json({
-//                     status: "fail",
-//                     message: "Không tìm thấy ID của người dùng",
-//                 });
-//             }
-//             const user = await userModel.findByPk(userId);
-
-//             res.status(200).json({
-//                 status: "success",
-//                 user
-//             });
-//         } catch (error) {
-//             console.log(error);
-//             res.sendStatus(501)
-//         }
-//     })
-//     app.delete("/user/:id", async (req, res) => {
-//         const userId = req.params.id;
-
-//         try {
-//             const result = await userModel.destroy({
-//                 where: { id: userId },
-//                 force: true,
-//             });
-//             if (result === 0) {
-//                 return res.status(404).json({
-//                     status: "Xóa người dùng thất bại! ID: " + userId,
-//                     message: "Khồng tìm thấy ID người dùng",
-//                 });
-//             }
-//             res.status(201).json({
-//                 message: "Xóa người dùng thành công!",
-//             });
-
-//         } catch (error) {
-//             console.log(error);
-//             res.sendStatus(501)
-//         }
-//     })
-// }
-export const create = async (req, res) => {
-    try {
-        const { hoten, ngaysinh, phongban, chucvu, phone, email } = req.body
-        const user = await userModel.create(
-            {
-                hoten,
-                ngaysinh,
-                phongban,
-                chucvu,
-                phone,
-                email
-            })
-
-        res.status(201).json({
-            status: "success",
-            user,
-
+        bcrypt.hash(password, saltRounds, async (err, hashedPassword) => {
+            if (err) {
+                reject(err)
+            } else {
+                resolve(hashedPassword)
+            }
         });
-    } catch (error) {
-        console.log(error);
-        res.sendStatus(501)
     }
+    )
 }
+
 export const getAllUser = async (req, res) => {
     try {
         const nhanvien = await userModel.findAll({});
@@ -130,44 +26,112 @@ export const getAllUser = async (req, res) => {
     }
 
 }
+
+export const getCourseById = async (req, res) => {
+    try {
+        const record = await userModel.findByPk(req.params.id);
+        if (!record) {
+            res.status(404).json({ error: 'Record not found' });
+        } else {
+            res.status(200).json(record);
+        }
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+export const createUser = async (req, res) => {
+
+    const { fullname, avatar, nickname, email, phone, address, password, active, role } = req.body;
+
+    generatePassword(password)
+        .then(
+            (hashedPassword) => {
+                const user = userModel.create(
+                    { fullname, avatar, nickname, email, phone, address, password: hashedPassword, active, role }
+                )
+                return user
+            }
+        )
+
+        .then(
+            (user) => {
+                res.status(201).json({
+                    status: "success",
+                    user,
+
+                });
+            }
+        )
+        .catch(
+            (err) => {
+                res.sendStatus(501);
+                console.log(err);
+            }
+        )
+
+
+
+}
 export const updateUser = async (req, res) => {
     const userId = req.params.id;
 
-    try {
-        const { hoten, ngaysinh, phongban, chucvu, phone, email } = req.body;
+    const { fullname, avatar, nickname, email, phone, address, password, active, role } = req.body;
 
-        const result = await userModel.update(
-            {
-                hoten,
-                ngaysinh,
-                phongban,
-                chucvu,
-                phone,
-                email,
-                updatedAt: Date.now()
-            },
-            {
-                where: {
-                    id: userId,
-                },
+    generatePassword(password)
+        .then(
+            (hashedPassword) => {
+                const result = userModel.update(
+                    {
+                        fullname, avatar, nickname, email, phone, address, password: hashedPassword, active, role, update_at: Date.now()
+                    },
+                    {
+                        where: {
+                            user_id: userId,
+                        },
+                    },
+
+                );
+                return result
             }
-        );
 
-        if (result[0] === 0) {
-            return res.status(404).json({
-                status: "fail",
-                message: "Không tìm thấy ID của người dùng",
-            });
-        }
-        const user = await userModel.findByPk(userId);
+        )
+        .then(() => {
+            if (result[0] === 0) {
+                return res.status(404).json({
+                    status: "fail",
+                    message: "Không tìm thấy ID của người dùng",
+                });
+            }
+        })
 
-        res.status(200).json({
-            status: "success",
-            user
-        });
-    } catch (error) {
-        console.log(error);
-        res.sendStatus(501)
-    }
+        .then(
+            async () => {
+                const user = await userModel.findByPk(userId);
+
+                res.status(200).json({
+                    status: "success",
+                    user
+                });
+            }
+
+        )
+        .catch((err) => {
+            console.log(err);
+            res.sendStatus(501)
+        })
 }
+
+export const deleteCourse = async (req, res) => {
+    try {
+        const record = await userModel.findByPk(req.params.id);
+        if (!record) {
+            res.status(404).json({ error: 'Record not found' });
+        } else {
+            await record.destroy();
+            res.status(200).json({ message: 'User deleted successfully!' });
+        }
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
 // export default initUser;

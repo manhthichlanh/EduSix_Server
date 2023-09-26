@@ -26,9 +26,7 @@ const userModel = sequelize.define("users", {
   phone: {
     type: DataTypes.STRING,
   },
-  address: {
-    type: DataTypes.STRING,
-  },
+
   password: {
     type: DataTypes.STRING,
     allowNull: false,
@@ -39,13 +37,15 @@ const userModel = sequelize.define("users", {
     defaultValue: true,
   },
   role: {
-    type: DataTypes.STRING,
+    type: DataTypes.INTEGER,
     allowNull: false,
-    defaultValue: 'user', // Giá trị mặc định là 'user'
+    defaultValue: 0, 
   },
 }, {
-  timestamps: true
+  createdAt: "created_at",
+  updatedAt: "updated_at"
 });
+
 userModel.sync().then(() => {
   console.log('User table created successfully!');
 }).catch((error) => {

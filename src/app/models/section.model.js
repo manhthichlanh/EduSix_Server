@@ -1,9 +1,10 @@
+import CourseModel from "./course.model.js";
 import sequelize from "./db.js";
 import { DataTypes } from 'sequelize';
 // import { sequelize, DataTypes }from 'sequelize';
 const SectionModel = sequelize.define("section", {
     // Định nghĩa các trường trong bảng Section
-    id: {
+    section_id: {
         type: DataTypes.INTEGER,
         allowNull: false,
         primaryKey: true,
@@ -16,7 +17,11 @@ const SectionModel = sequelize.define("section", {
     course_id: {
         type: DataTypes.INTEGER,
         allowNull: false,
-
+        references: {
+            model: CourseModel,
+            key: 'course_id'
+        }
+        
     },
     status: {
         type: DataTypes.BOOLEAN,
