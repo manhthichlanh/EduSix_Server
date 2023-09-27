@@ -7,6 +7,7 @@ const uploadDir = "public/videos";
 if (!fs.existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir);
 }
+
 //Nếu không tìm thấy thư mục thì tạo lại
 
 import { findVideoDuration } from "../../utils/util.helper";
@@ -101,6 +102,7 @@ export const updateVideo = async (req, res) => {
         if (!record) {
             return res.status(404).json({ error: 'Không tìm thấy dữ liệu phù hợp với yêu cầu của bạn!' });
         }
+        const { file_videos } = record;
         //Tìm video theo khóa chính
 
         //Tìm thời lượng video
@@ -141,7 +143,7 @@ export const updateVideo = async (req, res) => {
 
         //Cập nhật video trên file path
         if (uploadedFile) {
-            const oldFilePath = uploadDir + "/" + record.file_videos;
+            const oldFilePath = uploadDir + "/" + file_videos;
             // Kiểm tra xem tệp cũ có tồn tại không và xóa nó
             if (fs.existsSync(oldFilePath)) {
 
@@ -155,13 +157,7 @@ export const updateVideo = async (req, res) => {
                 });
 
                 unlinkSync(oldFilePath)
-                    .catch(async err => {
-                        console.log(err);
-                        fs.unlinkSync(filePath);
-                        await t.rollback();
-                        return res.status(500).json({ message: "Không thể thay thế file!" })
-                    })
-
+       
                 await t.commit();
                 return res.status(200).json({ message: "Cập nhật thành công!", payload: await result.save() })
 
