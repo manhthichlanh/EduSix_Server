@@ -5,6 +5,8 @@ import cors from "cors";
 import bodyParser from "body-parser";
 
 import './app/models/associations'
+
+import './app/models/associations'
 // import initUser from "./app/controllers/user.controller";
 import initApiV1 from "./routes/api_v1.route";
 const app = express();
@@ -14,8 +16,12 @@ config();
 
 //body parser 
 app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 //body parser 
+
+
+
 
 
 
@@ -32,12 +38,14 @@ app.use(cors());
 // initUserRoute(app);
 // initUser(app);
 // error handler
+// error handler
 // handle undefined Routes
 app.use('*', (req, res, next) => {
     const err = new AppError(404, 'fail', 'undefined route');
     next(err, req, res, next);
 });
 //connect db
+
 
 sequelize
     .authenticate()
@@ -46,6 +54,7 @@ sequelize
     })
     .catch((err) => {
         console.error('Unable to connect to SQL database:');
+        console.log(err)
         console.log(err)
     });
 
