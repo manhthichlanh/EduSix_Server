@@ -1,7 +1,7 @@
 import sequelize from "./db.js";
 import { DataTypes } from 'sequelize';
 // import { sequelize, DataTypes }from 'sequelize';
-import LessonModel from "./lesson.model.js";
+// import LessonModel from "./lesson.model.js";
 const CourseModel = sequelize.define("course", {
     // Định nghĩa các trường trong bảng Users
     course_id: {
@@ -31,7 +31,8 @@ const CourseModel = sequelize.define("course", {
         allowNull: false
     },
     status: {
-        type: DataTypes.INTEGER,
+        type: DataTypes.BOOLEAN,
+        comment: "True là hiện, false là ẩn",
         allowNull: false
     },
     type: {
@@ -43,7 +44,8 @@ const CourseModel = sequelize.define("course", {
         allowNull: false
     },
     total_course_time: {
-        type: DataTypes.DATE
+        type: DataTypes.INTEGER,
+        default: 0
     }
 
 }, {

@@ -1,7 +1,7 @@
 import sequelize from "./db.js";
 import { DataTypes } from 'sequelize';
 // import { sequelize, DataTypes }from 'sequelize';
-const videoModel = sequelize.define("video", {
+const VideoModel = sequelize.define("video", {
   // Định nghĩa các trường trong bảng Users
   video_id: {
     type: DataTypes.INTEGER,
@@ -25,8 +25,8 @@ const videoModel = sequelize.define("video", {
     defaultValue: 0,
   },
   status: {
-    type: DataTypes.INTEGER,
-    comment: "0 là ẩn, 1 là hiện",
+    type: DataTypes.BOOLEAN,
+    comment: "True là hiện, false là ẩn",
     defaultValue: 0,
   },
   type: {
@@ -38,9 +38,9 @@ const videoModel = sequelize.define("video", {
   createdAt: "created_at",
   updatedAt: "updated_at"
 });
-videoModel.sync().then(() => {
+VideoModel.sync().then(() => {
   console.log('Video table created successfully!');
 }).catch((error) => {
   console.error('Unable to create video : ', error);
 });
-export default videoModel;
+export default VideoModel;

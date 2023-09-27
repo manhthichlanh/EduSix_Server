@@ -18,7 +18,7 @@ const generatePassword = (password) => {
 
 export const getAllUser = async (req, res) => {
     try {
-        const nhanvien = await userModel.findAll({});
+        const nhanvien = await UserModel.findAll({});
         res.json(nhanvien)
     } catch (error) {
         console.log(error);

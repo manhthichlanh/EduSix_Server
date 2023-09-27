@@ -27,3 +27,13 @@ export const errorCode = {
 export const successCode = {
     Confirmed: 20001,
 };
+
+export const findVideoDuration = (buffer) => {
+    //Tìm độ dài video s
+    const start = buffer.indexOf(Buffer.from("mvhd")) + 16;
+    const timeScale = buffer.readUInt32BE(start);
+    const duration = buffer.readUInt32BE(start + 4);
+    const movieLength = Math.floor(duration / timeScale);
+    //Tìm độ dài video s
+    return movieLength
+}

@@ -1,7 +1,7 @@
 import sequelize from "./db.js";
 import { DataTypes } from 'sequelize';
 // import { sequelize, DataTypes }from 'sequelize';
-const userModel = sequelize.define("users", {
+const UserModel = sequelize.define("users", {
   // Định nghĩa các trường trong bảng Users
   user_id: {
     type: DataTypes.INTEGER,
@@ -31,8 +31,9 @@ const userModel = sequelize.define("users", {
     type: DataTypes.STRING,
     allowNull: false,
   },
-  active: {
+  status: {
     type: DataTypes.BOOLEAN,
+    comment: "True là hiện, false là ẩn",
     allowNull: false,
     defaultValue: true,
   },
@@ -46,9 +47,9 @@ const userModel = sequelize.define("users", {
   updatedAt: "updated_at"
 });
 
-userModel.sync().then(() => {
+UserModel.sync().then(() => {
   console.log('User table created successfully!');
 }).catch((error) => {
   console.error('Unable to create table : ', error);
 });
-export default userModel;
+export default UserModel;

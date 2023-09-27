@@ -6,7 +6,6 @@ const SectionModel = sequelize.define("section", {
     // Định nghĩa các trường trong bảng Section
     section_id: {
         type: DataTypes.INTEGER,
-        allowNull: false,
         primaryKey: true,
         autoIncrement: true
     },
@@ -17,20 +16,19 @@ const SectionModel = sequelize.define("section", {
     course_id: {
         type: DataTypes.INTEGER,
         allowNull: false,
-        references: {
-            model: CourseModel,
-            key: 'course_id'
-        }
-        
     },
     status: {
         type: DataTypes.BOOLEAN,
+        comment: "True là hiện, false là ẩn",
         allowNull: false
     }, ordinal_number: {
         type: DataTypes.INTEGER,
         allowNull: false,
 
     }
+}, {
+    createdAt: "created_at",
+    updatedAt: "updated_at"
 });
 SectionModel.sync().then(() => {
     console.log('Seaction table created successfully!');
