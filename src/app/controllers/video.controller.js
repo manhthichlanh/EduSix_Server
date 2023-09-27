@@ -1,6 +1,6 @@
-import videoModel from "../models/video.model";
-import fs from "fs";
-import uploadVideo from "../configs/uploadVideo.config";
+import VideoModel from "../models/video.model";
+import sequelize from "../models/db";
+import fs, { unlink, unlinkSync } from "fs";
 import path from "path";
 const uploadDir = "public/videos";
 //Nếu không tìm thấy thư mục thì tạo lại
@@ -9,73 +9,74 @@ if (!fs.existsSync(uploadDir)) {
 }
 //Nếu không tìm thấy thư mục thì tạo lại
 
+import { findVideoDuration } from "../../utils/util.helper";
+import { fetchYoutube } from "../../utils/googleAPI";
+
 export const createVideo = async (req, res) => {
     const uploadedFile = req.file;
-    const { lesson_id, youtube_id, duration, status, type } = req.body;
-
-    // Kiểm tra điều kiện 1: Không có tệp tải lên thì phải có youtube_id
-    if (!uploadedFile && !youtube_id) {
-        return res.status(400).json({ error: 'Không có tệp tải lên hoặc youtube_id.' });
-    }
-
-    // Kiểm tra điều kiện 2: Chỉ có một trong hai được null
-    if ((!uploadedFile && !youtube_id) || (uploadedFile && youtube_id)) {
-        return res.status(400).json({ error: 'Bạn phải upload file video hoặc có youtube_id!' });
-    }
-
-    // Xử lý tiếp
+    const { lesson_id, youtube_id, status, tagetLessonRecord } = req.body;
     const fileName = !uploadedFile ? null : Date.now() + '-' + uploadedFile.originalname.toLowerCase().split(" ").map(item => item.trim()).join("");
     try {
-        await videoModel.create({
-            lesson_id,
-            file_videos: fileName,
-            youtube_id,
-            duration,
-            status,
-            type: uploadedFile ? 1 : 0
-        })
-            .then((successData) => {
-                if (uploadedFile) {
-                    const filePath = path.join(uploadDir, fileName);
-                    fs.writeFile(filePath, uploadedFile.buffer, (err) => {
-                        if (err) {
-                            return res.status(500).json({ error: 'Lỗi khi lưu tệp.' });
-                        }
-                        //Xóa nó khỏi bộ nhớ ram
-                        uploadedFile.buffer = null;
+        // const { buffer } = uploadedFile
+        let duration = 0;
 
-                    });
-                }
-                // Trả về phản hồi thành công
-                return res.status(201).json(successData);
-            });
-    } catch (err) {
-        //Xóa nó khỏi bộ nhớ ram
-        if (uploadedFile) uploadedFile.buffer = null;
-        // Không tải lên tệp và trả về phản hồi
-        if (err.name === 'SequelizeUniqueConstraintError') {
-            console.log(err)
-            return res.status(400).json({ error: err.errors[0].message });
-        } else {
-            return res.status(400).json({ error: err.errors[0].message });
+        if (tagetLessonRecord.type === 1) duration = findVideoDuration(uploadedFile?.buffer);
+        else if (tagetLessonRecord.type === 0) {
+            await fetchYoutube(youtube_id)
+                .then(res => {
+                    duration = res.duration
+                })
+                .catch(err => {
+                    console.log(err)
+                    return res.status(402).json({ message: "Chưa thể xác định được thông tin từ youtube_id bạn cung cấp!" })
+                })
         }
+
+        const [row, created] = await VideoModel.findOrCreate(
+            {
+                where: { lesson_id },
+                defaults: {
+                    lesson_id,
+                    file_videos: fileName,
+                    youtube_id,
+                    duration,
+                    status,
+                    type: tagetLessonRecord.type
+                },
+            }
+        )
+
+        if (uploadedFile && created) {
+            const filePath = path.join(uploadDir, fileName);
+            fs.writeFileSync(filePath, uploadedFile?.buffer, async (err) => {
+
+                //Xóa nó khỏi bộ nhớ ram
+                uploadedFile.buffer = null;
+
+                if (err) {
+                    return res.status(500).json({ error: 'Lỗi khi lưu tệp.' });
+                }
+
+            });
+        }
+        return res.status(201).json({ row, created });
+    } catch (error) {
+        console.log(error);
+        return res.status(400).json({ error: error });
     }
+
 };
-
-
-
 export const getAllVideo = async (req, res) => {
     try {
-        const records = await videoModel.findAll();
+        const records = await VideoModel.findAll();
         res.status(200).json(records);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 };
-
 export const getVideoById = async (req, res) => {
     try {
-        const record = await videoModel.findByPk(req.params.id);
+        const record = await VideoModel.findByPk(req.params.id);
         if (!record) {
             res.status(404).json({ error: 'Record not found' });
         } else {
@@ -88,97 +89,130 @@ export const getVideoById = async (req, res) => {
 export const updateVideo = async (req, res) => {
 
     const uploadedFile = req.file;
+    const { youtube_id, status, lesson_id, tagetLessonRecord } = req.body;
 
-    if (!uploadedFile) {
-        return res.status(400).json({ error: 'Không có tệp tải lên.' });
-    }
+    const t = await sequelize.transaction();
 
-    await videoModel.findByPk(req.params.id)
-        .then(record => {
-            if (!record) {
-                return res.status(404).json({ error: 'Record not found' });
-            }
+    try {
 
+        //Tìm video theo khóa chính
+        const record = await VideoModel.findByPk(req.params.id);
 
-            const oldFilePath = uploadDir + "/" + record.file_videos;
-            // Kiểm tra xem tệp cũ có tồn tại không và xóa nó
-            if (fs.existsSync(oldFilePath)) {
-                fs.unlinkSync(oldFilePath);
-            } else {
-                return res.status(400).json({ error: 'Video file không tồn tại!.' });
-            }
-            return record
-        })
-        .then(async record => {
-            const { lesson_id, youtube_id, duration, status, type } = req.body;
+        if (!record) {
+            return res.status(404).json({ error: 'Không tìm thấy dữ liệu phù hợp với yêu cầu của bạn!' });
+        }
+        //Tìm video theo khóa chính
 
-            const fileName = Date.now() + '-' + uploadedFile.originalname.toLowerCase().split(" ").map(item => item.trim()).join("");
+        //Tìm thời lượng video
+        let duration = 0;
 
-            await record.update({
-                lesson_id,
+        if (tagetLessonRecord.type === 1) duration = findVideoDuration(uploadedFile?.buffer);
+        else if (tagetLessonRecord.type === 0) {
+            await fetchYoutube(youtube_id)
+                .then(res => {
+                    duration = res.duration
+                })
+                .catch(err => {
+                    console.log(err)
+                    return res.status(402).json({ message: "Chưa thể xác định được thông tin từ youtube_id bạn cung cấp!" })
+                })
+        }
+        //Tìm thời lượng video
+
+        //Cập nhật video trên database
+        const fileName = !uploadedFile ? null : Date.now() + '-' + uploadedFile.originalname.toLowerCase().split(" ").map(item => item.trim()).join("");
+
+        const result = await record.update(
+            {
                 file_videos: fileName,
+                lesson_id: lesson_id,
                 youtube_id,
                 duration,
                 status,
-                type,
+                type: tagetLessonRecord.type,
                 update_at: Date.now(),
-            })
-                .then((successData) => {
-                    // Xử lý khi cập nhật thành công
-                    const filePath = path.join(uploadDir, fileName);
-                    fs.writeFile(filePath, uploadedFile.buffer, (err) => {
-                        if (err) {
-                            return res.status(500).json({ error: 'Lỗi khi lưu tệp.' });
-                        }
-                        //Xóa nó khỏi bộ nhớ ram
-                        uploadedFile.buffer = null;
+            }, { transaction: t }
+        )
+        if (result === 0) {
+            throw new Error("Cập nhất thất bại!");
+            return;
+        }
+        //Cập nhật video trên database
 
-                        // Trả về phản hồi thành công
-                        return res.status(201).json(successData);
-                    });
-                    return res.status(200).json({ message: 'Cập nhật thông tin video thành công.' });
-                })
-                .catch((error) => {
+        //Cập nhật video trên file path
+        if (uploadedFile) {
+            const oldFilePath = uploadDir + "/" + record.file_videos;
+            // Kiểm tra xem tệp cũ có tồn tại không và xóa nó
+            if (fs.existsSync(oldFilePath)) {
 
-                    uploadedFile.buffer = null;
+                const filePath = path.join(uploadDir, fileName);
 
-                    if (error.name === 'SequelizeUniqueConstraintError') {
-                        console.error('Trường lesson_id bị :', error);
-                        return res.status(400).json({ error: 'Trường lesson_id bị trùng lặp.' });
+                fs.writeFile(filePath, uploadedFile.buffer, async (err) => {
+                    if (err) {
+                        await t.rollback();
+                        return res.status(500).json({ error: 'Lỗi khi lưu tệp.' });
                     }
                 });
-        })
-        .catch(err => {
-            console.log(err)
-            return res.status(501).json({ error: 'Server is error' });
-        })
+
+                unlinkSync(oldFilePath)
+                    .catch(async err => {
+                        console.log(err);
+                        fs.unlinkSync(filePath);
+                        await t.rollback();
+                        return res.status(500).json({ message: "Không thể thay thế file!" })
+                    })
+
+                await t.commit();
+                return res.status(200).json({ message: "Cập nhật thành công!", payload: await result.save() })
+
+
+            } else {
+                await t.rollback();
+                return res.status(400).json({ error: 'Video file không tồn tại!.' });
+            }
+        } else {
+            await t.commit();
+            return res.status(200).json({ message: "Cập nhật thành công!", payload: await result.save() })
+        }
+        //Cập nhật video trên file path
+    } catch (error) {
+        console.log(error);
+        return res.status()
+    }
 
 };
-
 export const deleteVideo = async (req, res) => {
+    const t = await sequelize.transaction();
+
     try {
-        const record = await videoModel.findByPk(req.params.id);
+
+        const record = await VideoModel.findByPk(req.params.id);
 
         if (!record) {
-            res.status(404).json({ error: 'Record not found' });
-        } else {
-            await record.destroy();
-            // Kiểm tra xem tệp cũ có tồn tại không và xóa nó
-            const oldFilePath = 'public/videos/' + record.file_videos;
+            return res.status(404).json({ error: 'Không tìm thấy dữ liệu phù hợp với yêu cầu của bạn!' });
+        }
 
-            if (fs.existsSync(oldFilePath)) {
-                fs.unlinkSync(oldFilePath);
+        await record.destroy({ transaction: t });
+
+        if (record.file_videos) {
+            const videoFile = uploadDir + "/" + record.file_videos;
+            if (fs.existsSync(videoFile)) {
+                fs.unlinkSync(videoFile);
+                await t.commit();
+                return res.status(501).json({ message: "Xóa thành công video" })
             } else {
-                res.status(501).json({ message: "Video not exist!" })
+                await t.rollback();
+                return res.status(501).json({ message: "Không tìm thấy file!" })
             }
-
-            res.status(200).json({ message: 'Video deleted successfully!' });
+        } else {
+            await t.commit();
+            return res.status(501).json({ message: "Xóa thành công video" });
         }
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        console.log(error);
+        return res.status(501).json({ error })
     }
 };
-
 export const getVideoStream = (req, res) => {
     const videoName = req.params.videoName;
     const videoPath = `public/videos/${videoName}`; // Đường dẫn tới video

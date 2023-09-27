@@ -1,6 +1,6 @@
 import { Router } from "express";
-import {uploadVideoOnMemory} from "../app/configs/uploadVideo.config";
-
+import { uploadVideoOnMemory } from "../app/configs/uploadVideo.config";
+import checkRequestVideo from "../../middleware/video.middleware";
 let router = Router();
 import * as initVideo from "../app/controllers/video.controller";
 
@@ -13,6 +13,7 @@ export default function (app) {
         // upload.none(),
         // uploadVideo.single("file_videos"), 
         uploadVideoOnMemory.single("file_videos"),
+        checkRequestVideo,
         initVideo.updateVideo)
 
     router.get("/stream/:videoName", initVideo.getVideoStream)
@@ -20,7 +21,9 @@ export default function (app) {
     router.post("/",
         // uploadVideo.single("file_videos"),
         uploadVideoOnMemory.single("file_videos"),
-        initVideo.createVideo)
+        checkRequestVideo,
+        initVideo.createVideo
+    )
 
     app.use("/video", router);
 }

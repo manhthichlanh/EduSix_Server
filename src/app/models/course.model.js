@@ -31,7 +31,8 @@ const CourseModel = sequelize.define("course", {
         allowNull: false
     },
     status: {
-        type: DataTypes.INTEGER,
+        type: DataTypes.BOOLEAN,
+        comment: "True là hiện, false là ẩn",
         allowNull: false
     },
     type: {
@@ -43,7 +44,8 @@ const CourseModel = sequelize.define("course", {
         allowNull: false
     },
     total_course_time: {
-        type: DataTypes.DATE
+        type: DataTypes.INTEGER,
+        default: 0
     }
 
 }, {

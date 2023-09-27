@@ -1,4 +1,4 @@
-import userModel from "../models/user.model";
+import UserModel from "../models/user.model";
 import bcrypt from "bcrypt";
 
 const generatePassword = (password) => {
@@ -18,7 +18,7 @@ const generatePassword = (password) => {
 
 export const getAllUser = async (req, res) => {
     try {
-        const nhanvien = await userModel.findAll({});
+        const nhanvien = await UserModel.findAll({});
         res.json(nhanvien)
     } catch (error) {
         console.log(error);
@@ -29,7 +29,7 @@ export const getAllUser = async (req, res) => {
 
 export const getCourseById = async (req, res) => {
     try {
-        const record = await userModel.findByPk(req.params.id);
+        const record = await UserModel.findByPk(req.params.id);
         if (!record) {
             res.status(404).json({ error: 'Record not found' });
         } else {
@@ -46,7 +46,7 @@ export const createUser = async (req, res) => {
     generatePassword(password)
         .then(
             (hashedPassword) => {
-                const user = userModel.create(
+                const user = UserModel.create(
                     { fullname, avatar, nickname, email, phone, address, password: hashedPassword, active, role }
                 )
                 return user
@@ -80,7 +80,7 @@ export const updateUser = async (req, res) => {
     generatePassword(password)
         .then(
             (hashedPassword) => {
-                const result = userModel.update(
+                const result = UserModel.update(
                     {
                         fullname, avatar, nickname, email, phone, address, password: hashedPassword, active, role, update_at: Date.now()
                     },
@@ -106,7 +106,7 @@ export const updateUser = async (req, res) => {
 
         .then(
             async () => {
-                const user = await userModel.findByPk(userId);
+                const user = await UserModel.findByPk(userId);
 
                 res.status(200).json({
                     status: "success",
@@ -123,7 +123,7 @@ export const updateUser = async (req, res) => {
 
 export const deleteCourse = async (req, res) => {
     try {
-        const record = await userModel.findByPk(req.params.id);
+        const record = await UserModel.findByPk(req.params.id);
         if (!record) {
             res.status(404).json({ error: 'Record not found' });
         } else {

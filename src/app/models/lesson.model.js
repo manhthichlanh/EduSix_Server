@@ -1,4 +1,4 @@
-import SectionModel from "./section.model.js";
+// import SectionModel from "./section.model.js";
 import sequelize from "./db.js";
 import { DataTypes } from 'sequelize';
 // import { sequelize, DataTypes }from 'sequelize';
@@ -13,10 +13,6 @@ const LessonModel = sequelize.define("lesson", {
     section_id: {
         type: DataTypes.INTEGER,
         allowNull: false,
-        // references: {
-        //     model: SectionModel,
-        //     key: 'section_id'
-        // }
     },
     name: {
         type: DataTypes.STRING,
@@ -28,18 +24,17 @@ const LessonModel = sequelize.define("lesson", {
     },
     status: {
         type: DataTypes.BOOLEAN,
+        comment: "True là hiện, false là ẩn",
         allowNull: false
     },
     type: {
-        type: DataTypes.BOOLEAN,
-        allowNull: false
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        comment: "Đây là dạng bài học: 0 là video youtube, 1 là video server, 2 là quizz"
     },
     duration: {
         type: DataTypes.INTEGER,
         allowNull: false
-    },
-    active: {
-        type: DataTypes.INTEGER
     },
     ordinal_number: {
         type: DataTypes.INTEGER
