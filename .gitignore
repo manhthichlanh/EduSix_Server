@@ -2,5 +2,6 @@ node_modules/
 .env
 package-lock.json
 package.json
-public
+public/videos/*
+public/images/*
 *.env
