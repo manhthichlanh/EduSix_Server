@@ -20,13 +20,15 @@ app.use(bodyParser.json());
 //body parser 
 
 
-initApiV1(app)
 
 const port = process.env.PORT || 8080;
 // app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(cors());
 //api 
+
+
+initApiV1(app);
 
 // initNhanVien(app);
 // initUserRoute(app);
@@ -35,8 +37,8 @@ app.use(cors());
 // error handler
 // handle undefined Routes
 app.use('*', (req, res, next) => {
-    const { statusCode, status, message } = new AppError(404, 'fail', 'undefined route');
-    return res.status(statusCode).json({ status, message })
+    const notPageMatchError = new AppError(404, 'fail', 'undefined route');
+    throw notPageMatchError
 });
 //connect db
 

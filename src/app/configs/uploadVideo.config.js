@@ -1,4 +1,15 @@
-import multer from "multer"
+import multer from "multer";
+
+const fileFilter = (res, file, cb) => {
+  if (file.mimetype.match(/image\/(mp4|ogg|webm)$/)) {
+    // Nếu có, cho phép tải lên
+    cb(null, true)
+  } else {
+    // Nếu không, từ chối tải lên
+    const err = new AppError(404, 'fail', 'Chỉ được tải lên các tệp hình ảnh có đuôi là mp4|ogg|webm!');
+    cb(err);
+  }
+}
 
 //Lưu trên đĩa cứng vật lý
 const diskStorage = multer.diskStorage({
@@ -10,13 +21,13 @@ const diskStorage = multer.diskStorage({
     cb(null, Date.now() + '-' + file.originalname.toLowerCase().split(" ").map(item => item.trim()).join(""))
   }
 });
-const uploadVideoOnDisk = multer({ storage: diskStorage });
+const uploadVideoOnDisk = multer({ storage: diskStorage, fileFilter });
 //Lưu trên đĩa cứng vật lý
 
 //Lưu trên ram
 const memoryStorage = multer.memoryStorage(); // Lưu trữ tệp trong bộ nhớ tạm thời
 
-const uploadVideoOnMemory = multer({ storage: memoryStorage });
+const uploadVideoOnMemory = multer({ storage: memoryStorage, fileFilter });
 //Lưu trên ram
 
 export {

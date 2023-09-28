@@ -12,7 +12,6 @@ if (!existsSync(uploadDir)) {
 
 import { findVideoDuration } from "../../utils/util.helper";
 import { fetchYoutube } from "../../utils/googleAPI";
-import { promises } from "dns";
 
 export const createVideo = async (req, res) => {
     const uploadedFile = req.file;
@@ -56,6 +55,7 @@ export const createVideo = async (req, res) => {
                 uploadedFile.buffer = null;
 
                 if (err) {
+                    await t.rollback();
                     return res.status(500).json({ error: 'Lỗi khi lưu tệp.' });
                 }
 
