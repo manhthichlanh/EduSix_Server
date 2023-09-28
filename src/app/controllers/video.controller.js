@@ -1,10 +1,10 @@
 import VideoModel from "../models/video.model";
 import sequelize from "../models/db";
-import fs, { unlink, unlinkSync } from "fs";
+import fs, { existsSync, unlinkSync } from "fs";
 import path from "path";
 const uploadDir = "public/videos";
 //Nếu không tìm thấy thư mục thì tạo lại
-if (!fs.existsSync(uploadDir)) {
+if (!existsSync(uploadDir)) {
     fs.mkdirSync(uploadDir);
 }
 
@@ -12,6 +12,7 @@ if (!fs.existsSync(uploadDir)) {
 
 import { findVideoDuration } from "../../utils/util.helper";
 import { fetchYoutube } from "../../utils/googleAPI";
+import { promises } from "dns";
 
 export const createVideo = async (req, res) => {
     const uploadedFile = req.file;
@@ -145,7 +146,7 @@ export const updateVideo = async (req, res) => {
         if (uploadedFile) {
             const oldFilePath = uploadDir + "/" + file_videos;
             // Kiểm tra xem tệp cũ có tồn tại không và xóa nó
-            if (fs.existsSync(oldFilePath)) {
+            if (existsSync(oldFilePath)) {
 
                 const filePath = path.join(uploadDir, fileName);
 
@@ -157,7 +158,7 @@ export const updateVideo = async (req, res) => {
                 });
 
                 unlinkSync(oldFilePath)
-       
+
                 await t.commit();
                 return res.status(200).json({ message: "Cập nhật thành công!", payload: await result.save() })
 
@@ -192,8 +193,8 @@ export const deleteVideo = async (req, res) => {
 
         if (record.file_videos) {
             const videoFile = uploadDir + "/" + record.file_videos;
-            if (fs.existsSync(videoFile)) {
-                fs.unlinkSync(videoFile);
+            if (existsSync(videoFile)) {
+                unlinkSync(videoFile);
                 await t.commit();
                 return res.status(501).json({ message: "Xóa thành công video" })
             } else {
@@ -215,7 +216,7 @@ export const getVideoStream = (req, res) => {
     // Kiểm tra xem tệp video có tồn tại không
     console.log(videoName)
 
-    if (!fs.existsSync(videoPath)) {
+    if (!existsSync(videoPath)) {
         return res.status(404).json({ error: 'Video not found' });
     }
 
