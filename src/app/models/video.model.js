@@ -34,6 +34,7 @@ const VideoModel = sequelize.define("video", {
     comment: "0 là nhúng từ youtube, 1 là video trong của server => Dùng để query, read",
     defaultValue: 0,
   },
+
 }, {
   createdAt: "created_at",
   updatedAt: "updated_at"
