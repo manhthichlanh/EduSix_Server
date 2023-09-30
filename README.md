@@ -12,3 +12,4 @@
     + Update
     + Delete
     => try catch aync await
+- git push không được có thể có rất nhiều lỗi khác nhau
