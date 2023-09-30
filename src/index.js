@@ -3,9 +3,8 @@ import { config } from "dotenv"
 import sequelize from "./app/models/db";
 import cors from "cors";
 import bodyParser from "body-parser";
-
+import AppError from "./utils/appError";
 import './app/models/associations'
-
 import './app/models/associations'
 // import initUser from "./app/controllers/user.controller";
 import initApiV1 from "./routes/api_v1.route";
@@ -22,17 +21,14 @@ app.use(bodyParser.json());
 
 
 
-
-
-
-
-initApiV1(app)
-
 const port = process.env.PORT || 8080;
 // app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(cors());
 //api 
+
+
+initApiV1(app);
 
 // initNhanVien(app);
 // initUserRoute(app);
@@ -41,11 +37,10 @@ app.use(cors());
 // error handler
 // handle undefined Routes
 app.use('*', (req, res, next) => {
-    const err = new AppError(404, 'fail', 'undefined route');
-    next(err, req, res, next);
+    const notPageMatchError = new AppError(404, 'fail', 'undefined route');
+    throw notPageMatchError
 });
 //connect db
-
 
 sequelize
     .authenticate()

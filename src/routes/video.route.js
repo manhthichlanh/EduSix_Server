@@ -24,6 +24,5 @@ export default function (app) {
         checkRequestVideo,
         initVideo.createVideo
     )
-
     app.use("/video", router);
 }
