@@ -1,6 +1,10 @@
-import userModel from "../models/user.model";
+import UserModel from "../models/user.model";
 import bcrypt from "bcrypt";
-
+import jwt from "jsonwebtoken";
+import { readFileSync } from "fs";
+import path from "path";
+const privateKey = readFileSync("SSL/private-key.txt", "utf-8");
+const publicKey = readFileSync("SSL/public-key.txt", "utf-8");
 const generatePassword = (password) => {
     return new Promise((resolve, reject) => {
         const saltRounds = 10; // Số lượng vòng lặp băm (tăng độ an toàn)
@@ -29,7 +33,7 @@ export const getAllUser = async (req, res) => {
 
 export const getCourseById = async (req, res) => {
     try {
-        const record = await userModel.findByPk(req.params.id);
+        const record = await UserModel.findByPk(req.params.id);
         if (!record) {
             res.status(404).json({ error: 'Record not found' });
         } else {
@@ -46,7 +50,7 @@ export const createUser = async (req, res) => {
     generatePassword(password)
         .then(
             (hashedPassword) => {
-                const user = userModel.create(
+                const user = UserModel.create(
                     { fullname, avatar, nickname, email, phone, address, password: hashedPassword, active, role }
                 )
                 return user
@@ -80,7 +84,7 @@ export const updateUser = async (req, res) => {
     generatePassword(password)
         .then(
             (hashedPassword) => {
-                const result = userModel.update(
+                const result = UserModel.update(
                     {
                         fullname, avatar, nickname, email, phone, address, password: hashedPassword, active, role, update_at: Date.now()
                     },
@@ -106,7 +110,7 @@ export const updateUser = async (req, res) => {
 
         .then(
             async () => {
-                const user = await userModel.findByPk(userId);
+                const user = await UserModel.findByPk(userId);
 
                 res.status(200).json({
                     status: "success",
@@ -123,9 +127,9 @@ export const updateUser = async (req, res) => {
 
 export const deleteCourse = async (req, res) => {
     try {
-        const record = await userModel.findByPk(req.params.id);
+        const record = await UserModel.findByPk(req.params.id);
         if (!record) {
-            res.status(404).json({ error: 'Record not found' });
+            res.status(404).json({ error: 'Record not found ' });
         } else {
             await record.destroy();
             res.status(200).json({ message: 'User deleted successfully!' });
@@ -134,4 +138,48 @@ export const deleteCourse = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 };
-// export default initUser;
+
+export const loginUser = async (req, res) => {
+    const { email, password } = req.body;
+
+    try {
+        const user = await UserModel.findOne({ where: { email } });
+        
+        if (!user) {
+            return res.status(404).json({ message: "Email không tồn tại" });
+        }
+
+        const isPasswordValid = await bcrypt.compare(password, user.password);
+        
+        if (!isPasswordValid) {
+            return res.status(401).json({ message: "Mật khẩu không chính xác" });
+        }
+
+        // Create JWT
+        const token = jwt.sign({ userId: user.user_id, email: user.email, role: user.role }, privateKey, {
+            algorithm: 'RS256',
+            expiresIn: "1h",
+        });
+
+        return res.status(200).json({ token, user });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Lỗi đăng nhập" });
+    }
+};
+export const authenticateJWT = (req, res, next) => {
+    const token = req.headers.authorization;
+
+    if (token) {
+        jwt.verify(token, publicKey, (err, user) => {
+            if (err) {
+                return res.sendStatus(403);
+            }
+
+            req.user = user;
+            next();
+        });
+    } else {
+        res.sendStatus(401);
+    }
+};
