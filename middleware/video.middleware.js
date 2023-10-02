@@ -13,14 +13,14 @@ export const checkRequestVideo = async (req, res, next) => {
     if (record) {
         switch (record.type) {
             case 0:
-                if (!youtube_id) return res.status(401).json({ message: "Vui lòng cung cấp dữ liệu youtube_id theo đúng yêu cầu kiểu khóa học là " + (record.type === 1 ? "<có phí>" : "<miễn phí>")})
+                if (!youtube_id) return res.status(415).json({ message: "Vui lòng cung cấp dữ liệu youtube_id theo đúng yêu cầu của bài học", type: record.type })
                 break;
             case 1:
-                if (!uploadedFile) return res.status(401).json({ message: "Vui lòng cung cấp dữ liệu video_file theo đúng yêu cầu kiểu khóa học là " + (record.type === 1 ? "<có phí>" : "<miễn phí>") })
+                if (!uploadedFile) return res.status(415).json({ message: "Vui lòng cung cấp dữ liệu video_file theo đúng yêu cầu của bải học", type: record.type })
                 break;
             default:
-                return res.status(401).json({message:"Bài học không hỗ trợ đăng tải video!"})
-                
+                return res.status(401).json({ message: "Bài học không hỗ trợ đăng tải video!" })
+
         }
 
         req.body.tagetLessonRecord = record;

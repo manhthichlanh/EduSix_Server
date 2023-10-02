@@ -1,12 +1,12 @@
 import multer from "multer";
-
+import AppError from "../../utils/appError"
 const fileFilter = (res, file, cb) => {
-  if (file.mimetype.match(/image\/(mp4|ogg|webm)$/)) {
+  if (file.mimetype.match(/video\/(mp4|ogg|webm)$/)) {
     // Nếu có, cho phép tải lên
     cb(null, true)
   } else {
     // Nếu không, từ chối tải lên
-    const err = new AppError(404, 'fail', 'Chỉ được tải lên các tệp hình ảnh có đuôi là mp4|ogg|webm!');
+    const err = new AppError(404, 'fail', 'Chỉ được tải lên các tệp video có đuôi là mp4|ogg|webm!');
     cb(err);
   }
 }

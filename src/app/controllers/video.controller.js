@@ -47,21 +47,33 @@ export const createVideo = async (req, res) => {
             }
         )
 
-        if (uploadedFile && created) {
-            const filePath = path.join(uploadDir, fileName);
-            fs.writeFileSync(filePath, uploadedFile?.buffer, async (err) => {
+        if (created) {
+            if (uploadedFile) {
+                const filePath = path.join(uploadDir, fileName);
+                fs.writeFileSync(filePath, uploadedFile?.buffer, async (err) => {
 
-                //Xóa nó khỏi bộ nhớ ram
-                uploadedFile.buffer = null;
+                    //Xóa nó khỏi bộ nhớ ram
+                    uploadedFile.buffer = null;
 
-                if (err) {
-                    await t.rollback();
-                    return res.status(500).json({ error: 'Lỗi khi lưu tệp.' });
-                }
+                    if (err) {
+                        return res.status(500).json({ error: 'Lỗi khi lưu tệp.' });
+                    }
 
-            });
+                });
+                return res.status(201).json({ row, created });
+            } else {
+                return res.status(201).json({ row, created });
+
+            }
+        } else {
+            if (row) {
+                return res.status(400).json({ message: "Tạo mới thất bại! Trường lesson_id của bạn đã được sử dụng!", row, created });
+            } else {
+                return res.status(400).json({ message: "Tạo mới thất bại!", row, created });
+            }
         }
-        return res.status(201).json({ row, created });
+
+
     } catch (error) {
         console.log(error);
         return res.status(400).json({ error: error });
