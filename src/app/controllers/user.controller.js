@@ -3,6 +3,7 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { readFileSync } from "fs";
 import path from "path";
+
 export const getAllUser = async (req, res) => {
     try {
         const nhanvien = await UserModel.findAll();
