@@ -3,6 +3,9 @@ import SectionModel from './section.model';
 import LessonModel from './lesson.model';
 import CategoryModel from './category.model';
 import videoModel from './video.model';
+import QuizzModel from './quizz.models';
+import AnswerModel from './answer.model';
+
 // Định nghĩa mối quan hệ giữa Course và Section
 CourseModel.hasMany(SectionModel, { foreignKey: 'course_id' });
 SectionModel.belongsTo(CourseModel, { foreignKey: 'course_id' });
@@ -15,3 +18,6 @@ CourseModel.hasMany(CategoryModel, { foreignKey: 'category_id'});
 //Đình nghĩa mối quan hệ Lesson và videos
 LessonModel.hasMany(videoModel, { foreignKey: "lesson_id"});
 videoModel.belongsTo(LessonModel, { foreignKey: "lesson_id"});
+//QUan he quizz và answer 
+QuizzModel.hasMany(AnswerModel, { foreignKey: "quizz_id",as:"relaQuizz"});
+AnswerModel.belongsTo(QuizzModel, { foreignKey: "quizz_id",as:"relaAnswer"});
