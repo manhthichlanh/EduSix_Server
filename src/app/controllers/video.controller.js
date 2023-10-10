@@ -224,6 +224,7 @@ export const deleteVideo = async (req, res) => {
 };
 export const getVideoStream = (req, res) => {
     const videoName = req.params.videoName;
+    
     const videoPath = `public/videos/${videoName}`; // Đường dẫn tới video
     // Kiểm tra xem tệp video có tồn tại không
     console.log(videoName)

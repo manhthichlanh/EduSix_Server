@@ -97,7 +97,6 @@ export const updateCourse = async (req, res) => {
         res.status(400).json({ error: error.message });
     }
 };
-
 export const deleteCourse = async (req, res) => {
     try {
         const record = await CourseModel.findByPk(req.params.id);
