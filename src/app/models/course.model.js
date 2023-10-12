@@ -13,6 +13,9 @@ const CourseModel = sequelize.define("course", {
     category_id: {
         type: DataTypes.INTEGER,
     },
+    user_id: {
+        type: DataTypes.INTEGER,
+    },
     name: {
         type: DataTypes.STRING,
         allowNull: false

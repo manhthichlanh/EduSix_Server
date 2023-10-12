@@ -198,7 +198,8 @@ export const deleteVideo = async (req, res) => {
         const record = await VideoModel.findByPk(req.params.id);
 
         if (!record) {
-            return res.status(404).json({ error: 'Không tìm thấy dữ liệu phù hợp với yêu cầu của bạn!' });
+            await t.commit();
+            return res.status(404).json({ message: 'Không tìm thấy dữ liệu phù hợp với yêu cầu của bạn!' });
         }
 
         await record.destroy({ transaction: t });
@@ -208,14 +209,14 @@ export const deleteVideo = async (req, res) => {
             if (existsSync(videoFile)) {
                 unlinkSync(videoFile);
                 await t.commit();
-                return res.status(501).json({ message: "Xóa thành công video" })
+                return res.status(501).json({ message: "Xóa thành công video!" })
             } else {
                 await t.rollback();
-                return res.status(501).json({ message: "Không tìm thấy file!" })
+                return res.status(501).json({ message: "File video không tồn tại!" })
             }
         } else {
             await t.commit();
-            return res.status(501).json({ message: "Xóa thành công video" });
+            return res.status(200).json({ message: "Xóa thành công video!" });
         }
     } catch (error) {
         console.log(error);
@@ -224,7 +225,7 @@ export const deleteVideo = async (req, res) => {
 };
 export const getVideoStream = (req, res) => {
     const videoName = req.params.videoName;
-    
+    console.log(req.method)
     const videoPath = `public/videos/${videoName}`; // Đường dẫn tới video
     // Kiểm tra xem tệp video có tồn tại không
     console.log(videoName)
