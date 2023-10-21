@@ -1,6 +1,9 @@
 import VideoModel from "../models/video.model";
 import sequelize from "../models/db";
-import fs, { existsSync, unlinkSync } from "fs";
+import fs, { existsSync, readFile, unlinkSync } from "fs";
+import { path as ffmpegPath } from "@ffmpeg-installer/ffmpeg";
+import ffmpeg from "fluent-ffmpeg";
+ffmpeg.setFfmpegPath(ffmpegPath);
 import path from "path";
 const uploadDir = "public/videos";
 //Nếu không tìm thấy thư mục thì tạo lại
@@ -12,30 +15,31 @@ if (!existsSync(uploadDir)) {
 
 import { findVideoDuration } from "../../utils/util.helper";
 import { fetchYoutube } from "../../utils/googleAPI";
+import AppError from "../../utils/appError";
 
 export const createVideo = async (req, res) => {
     const uploadedFile = req.file;
     const { lesson_id, youtube_id, status, tagetLessonRecord } = req.body;
-    const fileName = !uploadedFile ? null : Date.now() + '-' + uploadedFile.originalname.toLowerCase().split(" ").map(item => item.trim()).join("");
+    const fileName = !uploadedFile ? null : uploadedFile.originalname + ".m3u8";
+    // try {
+    // const { buffer } = uploadedFile
+    let duration = 0;
+
+    if (tagetLessonRecord.type === 1) duration = findVideoDuration(uploadedFile?.buffer);
+    else if (tagetLessonRecord.type === 0) {
+        await fetchYoutube(youtube_id)
+            .then(res => {
+                duration = res.duration
+            })
+            .catch(err => {
+                console.log(err)
+                return res.status(402).json({ message: "Chưa thể xác định được thông tin từ youtube_id bạn cung cấp!" })
+            })
+    }
     try {
-        // const { buffer } = uploadedFile
-        let duration = 0;
-
-        if (tagetLessonRecord.type === 1) duration = findVideoDuration(uploadedFile?.buffer);
-        else if (tagetLessonRecord.type === 0) {
-            await fetchYoutube(youtube_id)
-                .then(res => {
-                    duration = res.duration
-                })
-                .catch(err => {
-                    console.log(err)
-                    return res.status(402).json({ message: "Chưa thể xác định được thông tin từ youtube_id bạn cung cấp!" })
-                })
-        }
-
-        const [row, created] = await VideoModel.findOrCreate(
-            {
-                where: { lesson_id },
+        await sequelize.transaction(async (transaction) => {
+            const [row, created] = await VideoModel.findOrCreate({
+                where: { lesson_id: lesson_id },
                 defaults: {
                     lesson_id,
                     file_videos: fileName,
@@ -44,40 +48,51 @@ export const createVideo = async (req, res) => {
                     status,
                     type: tagetLessonRecord.type
                 },
-            }
-        )
+                transaction
+            },)
+            
+            if (created) throw new AppError(500, "fail","Tạo mới database thất bại!")
 
-        if (created) {
             if (uploadedFile) {
                 const filePath = path.join(uploadDir, fileName);
-                fs.writeFileSync(filePath, uploadedFile?.buffer, async (err) => {
 
-                    //Xóa nó khỏi bộ nhớ ram
-                    uploadedFile.buffer = null;
-
-                    if (err) {
-                        return res.status(500).json({ error: 'Lỗi khi lưu tệp.' });
-                    }
-
-                });
-                return res.status(201).json({ row, created });
-            } else {
-                return res.status(201).json({ row, created });
-
+                const newBuffer = Buffer.from("Chào mày")
+                //Create file hls type (m3u4)
+                new ffmpeg() // Use the videoFileName based on your database query
+                    .input(newBuffer)
+                    .addOption('-hls_time', 10)
+                    .addOption('-hls_list_size', 0)
+                    .addOption('-f', 'hls')
+                    .addOption('-codec:v', 'libx264')
+                    .addOption('-preset', 'ultrafast')
+                    .addOption('-hls_flags', 'delete_segments')
+                    .output(filePath)
+                    .on('end', () => {
+                        console.log('HLS generation finished.');
+                        return res.status(201).json(row);
+                    })
+                    .on('error', (err) => {
+                        console.error('Error:', err);
+                        throw new AppError(500, "fail", err.message)
+                        return
+                    })
+                    .on('progress', function (progress) {
+                        console.log('Processing: ' + progress.percent + '% done');
+                        console.log(progress);
+                    })
+                    .run();
             }
-        } else {
-            if (row) {
-                return res.status(400).json({ message: "Tạo mới thất bại! Trường lesson_id của bạn đã được sử dụng!", row, created });
-            } else {
-                return res.status(400).json({ message: "Tạo mới thất bại!", row, created });
-            }
-        }
-
-
+        })
     } catch (error) {
         console.log(error);
-        return res.status(400).json({ error: error });
+        return res.status(error.statusCode ? error.statusCode : 500).json({ message: error.message })
     }
+
+
+    // } catch (error) {
+    //     console.log(error);
+    //     return res.status(error.statusCode ? error.statusCode : 500).json({ message: error?.message });
+    // }
 
 };
 export const getAllVideo = async (req, res) => {
@@ -247,7 +262,7 @@ export const getVideoStream = (req, res) => {
             'Content-Range': `bytes ${start}-${end}/${fileSize}`,
             'Accept-Ranges': 'bytes',
             'Content-Length': chunksize,
-            'Content-Type': 'video/mp4',
+            'Content-Type': 'video/mp2t',
         };
 
         res.writeHead(206, head);
@@ -255,7 +270,7 @@ export const getVideoStream = (req, res) => {
     } else {
         const head = {
             'Content-Length': fileSize,
-            'Content-Type': 'video/mp4',
+            'Content-Type': 'video/mp2t',
         };
         res.writeHead(200, head);
         fs.createReadStream(videoPath).pipe(res);

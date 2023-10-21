@@ -1,8 +1,14 @@
 import multer from "multer";
 import AppError from "../../utils/appError"
+import path from "path"
 const fileFilter = (res, file, cb) => {
   if (file.mimetype.match(/video\/(mp4|ogg|webm)$/)) {
     // Nếu có, cho phép tải lên
+    const fileExt = path.extname(file.originalname); // Get the original file extension
+    const fileNameWithoutExt = Date.now() + '-' + file.originalname.replace(fileExt, '').toLowerCase().split(" ").map(item => item.trim()).join(""); // Remove the extension
+
+    // Add a new property 'originalname' without the extension
+    file.originalname = fileNameWithoutExt;
     cb(null, true)
   } else {
     // Nếu không, từ chối tải lên
