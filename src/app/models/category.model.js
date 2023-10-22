@@ -18,6 +18,7 @@ const CategoryModel = sequelize.define("category", {
     },
     ordinal_number: {
         type: DataTypes.INTEGER,
+        autoIncrement: true,
         allowNull: false,
     }
 }, {
