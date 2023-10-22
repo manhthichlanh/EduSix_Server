@@ -5,6 +5,9 @@ const router = Router();
 
 export default function initQuizzRoute(app) {
     router.post("/create", initQuizz.createQuizz);
+    router.post("/createMore", initQuizz.createMoreQuiz);
+
+
     router.post("/updateQuizz/:id", initQuizz.updateQuizz);
     router.delete("/deleteQuizzById/:id", initQuizz.deleteQuizzById);
     //router client

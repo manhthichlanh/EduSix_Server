@@ -63,6 +63,39 @@ export const createQuizz = async (req, res, next) => {
         next(error);
     }
 };
+//create More quizz
+export const createMoreQuiz = async (req, res, next) => {
+    try {
+        const { questions } = req.body; // Gửi một mảng các câu hỏi
+
+        const createdQuizzes = await Promise.all(questions.map(async (questionData) => {
+            const { question, progress, lesson_id, status, answers } = questionData;
+            const newQuiz = await QuizzModel.create({
+                question,
+                progress,
+                lesson_id,
+                status,
+            });
+
+            if (answers && answers.length > 0) {
+                const answerRecords = await AnswerModel.bulkCreate(
+                    answers.map((answer) => ({
+                        answer: answer.answer,
+                        isCorrect: answer.isCorrect,
+                        quizz_id: newQuiz.id,
+                        explain: answer.explain,
+                    })
+                ));
+            }
+
+            return newQuiz;
+        }));
+
+        return res.status(201).json(createdQuizzes);
+    } catch (error) {
+        next(error);
+    }
+};
 
 export const updateQuizz = async (req, res, next) => {
     try {
