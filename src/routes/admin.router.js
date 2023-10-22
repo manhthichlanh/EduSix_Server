@@ -6,6 +6,7 @@ import initUserRoute from "./user.route";
 import initAuthRoute from "./auth.route";
 import initQuizzRoute from "./quizz.route";
 import initVideoRoute from "./video.route";
+
 export default function adminRouter(app) {
     
     initCourseRoute(app)
