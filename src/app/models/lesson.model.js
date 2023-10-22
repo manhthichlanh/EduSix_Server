@@ -38,7 +38,6 @@ const LessonModel = sequelize.define("lesson", {
     },
     ordinal_number: {
         type: DataTypes.INTEGER,
-        autoIncrement: true
     },
 }, {
     createdAt: "created_at",

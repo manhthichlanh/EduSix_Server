@@ -23,9 +23,7 @@ const SectionModel = sequelize.define("section", {
         allowNull: false
     }, ordinal_number: {
         type: DataTypes.INTEGER,
-        autoIncrement: true,
         allowNull: false,
-
     }
 }, {
     createdAt: "created_at",

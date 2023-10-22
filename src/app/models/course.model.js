@@ -23,7 +23,6 @@ const CourseModel = sequelize.define("course", {
     number_of_lessons: {
         type: DataTypes.INTEGER,
         allowNull: false,
-
     },
     slug: {
         type: DataTypes.STRING,
