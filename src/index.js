@@ -3,7 +3,6 @@ import { config } from "dotenv"
 import sequelize from "./app/models/db";
 import cors from "cors";
 import bodyParser from "body-parser";
-
 import './app/models/associations'
 import initApiV1 from "./routes/api_v1.route";
 const app = express();
