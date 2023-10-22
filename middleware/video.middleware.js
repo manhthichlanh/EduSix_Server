@@ -9,7 +9,7 @@ export const checkRequestVideo = async (req, res, next) => {
     }
 
     const record = await LessonModel.findByPk(lesson_id);
-    
+
     if (record) {
         switch (record.type) {
             case 0:

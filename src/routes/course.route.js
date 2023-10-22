@@ -13,5 +13,6 @@ export default function initCourseRoute(app) {
     router.put("/:id", 
     uploadImageOnMemory.single("thumbnail"),
     initCourse.updateCourse)
+    router.get("/thumbnail/:fileName", initCourse.getImage)
     app.use("/course", router);
 }

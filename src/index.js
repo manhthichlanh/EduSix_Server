@@ -28,10 +28,10 @@ app.use(express.json());
 // error handler
 // error handler
 // handle undefined Routes
-app.use('*', (req, res, next) => {
-    const notPageMatchError = new AppError(404, 'fail', 'undefined route');
-    throw notPageMatchError
-});
+// app.use('*', (req, res, next) => {
+//     const notPageMatchError = new AppError(404, 'fail', 'undefined route');
+//     throw notPageMatchError
+// });
 
 //connect db
 sequelize
