@@ -37,7 +37,7 @@ const LessonModel = sequelize.define("lesson", {
         allowNull: false
     },
     ordinal_number: {
-        type: DataTypes.INTEGER
+        type: DataTypes.INTEGER,
     },
 }, {
     createdAt: "created_at",

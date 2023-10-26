@@ -27,7 +27,8 @@ const QuizzModel = sequelize.define("quizz", {
     }
 }, {
     createdAt: "created_at",
-    updatedAt: "updated_at"});
+    updatedAt: "updated_at"
+});
 QuizzModel.sync().then(() => {
     console.log('Quizz table created successfully!');
 }).catch((error) => {
