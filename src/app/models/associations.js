@@ -26,3 +26,6 @@ videoModel.belongsTo(LessonModel, { foreignKey: "lesson_id"});
 //QUan he quizz và answer 
 QuizzModel.hasMany(AnswerModel, { foreignKey: "quizz_id",as:"relaQuizz"});
 AnswerModel.belongsTo(QuizzModel, { foreignKey: "quizz_id",as:"relaAnswer"});
+//Quan hệ giữa Quizz và Lesson
+LessonModel.hasMany(QuizzModel, { foreignKey: "lesson_id"});
+QuizzModel.belongsTo(LessonModel, { foreignKey: "lesson_id"});
