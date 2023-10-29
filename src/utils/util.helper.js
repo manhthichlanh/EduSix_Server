@@ -1,3 +1,7 @@
+import fs from "fs";
+import ffmpeg from "fluent-ffmpeg";
+import path from "path";
+import { resume, pause } from "fluent-ffmpeg-util";
 export const adminStatus = {
     None: 0,
     Active: 1,
@@ -27,7 +31,13 @@ export const errorCode = {
 export const successCode = {
     Confirmed: 20001,
 };
-
+export const wait = (second) => {
+    return new Promise((resovle) => {
+        setTimeout(() => {
+            resovle()
+        }, second)
+    })
+}
 export const findVideoDuration = (buffer) => {
     //Tìm độ dài video s
     const start = buffer.indexOf(Buffer.from("mvhd")) + 16;
@@ -37,3 +47,67 @@ export const findVideoDuration = (buffer) => {
     //Tìm độ dài video s
     return movieLength
 }
+// export const getAndDeleteHLSFile = async (m3u8FilePath, segmentFilePath) => {
+//     const m3u8Content = await fs.promises.readFile(m3u8FilePath, 'utf8');
+//     for (const line of m3u8Content.split('\n')) {
+//         if (line.startsWith('#EXTINF:')) {
+//             const segmentFileName = m3u8Content.split('\n')[m3u8Content.split('\n').indexOf(line) + 1];
+//             console.log(segmentFileName);
+//             // await fs.promises.unlink(segmentFilePath + segmentFileName);
+//         }
+//     }
+//     await fs.promises.unlink(m3u8FilePath);
+// }
+export const convertToHLS = async (uploadedFile, res) => {
+    const hlsPath = `public/videos/hls/`;
+    const videoPath = `public/videos/`;
+    const fileName = !uploadedFile ? null : uploadedFile.originalname;
+    const inputFilePath = path.join(videoPath, fileName);
+    await fs.promises.writeFile(inputFilePath, uploadedFile?.buffer)
+    const m3u8FilePath = path.join(hlsPath, fileName + ".m3u8");
+    const command = ffmpeg()
+        .input(inputFilePath)
+        .addOption('-f', 'hls')
+        .addOption('-hls_time', 10)
+        .addOption('-hls_list_size', 0)
+        .addOption('-codec:v', 'libx264')
+        .addOption('-preset', 'ultrafast')
+        .addOption('-hls_flags', 'delete_segments')
+        .output(m3u8FilePath)
+        .on('progress', function (progress) {
+            console.log('Processing: ' + progress.percent + '% done');
+            // userIO.emit("process_percent", progress.percent)
+        })
+        .on('end', async () => {
+            console.log('HLS conversion finished.');
+            // Remove the temporary input file
+            await fs.promises.unlink(inputFilePath)
+            console.log("ngừng")
+            // userIO.emit("render-status", { status: "success", filePath: fileName.split(".").slice(0, -1).join("") + ".m3u8" })
+            return res.send('HLS generation completed.');
+        })
+        .on('error', async (err) => {
+            console.error('Error:', err);
+            // Remove the temporary input file
+            // const outputFiles = await fs.promises.readdir(m3u8FilePath.split('.m3u8')[0]);
+            // console.log(outputFiles)
+            // await getAndDeleteHLSFile(m3u8FilePath, hlsPath)
+            return res.status(500).send('Error generating HLS.');
+        });
+
+    command.run();
+
+    await wait(2000)
+        .then(() => {
+            pause(command)
+        })
+    await wait(2000)
+        .then(() => {
+            resume(command)
+        })
+    await wait(6000)
+        .then(() => {
+            command.kill()
+        })
+}
+

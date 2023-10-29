@@ -16,7 +16,7 @@ const io = require('socket.io')(http, {
 // const ffmpegPath = require('@ffmpeg-installer/ffmpeg').path;
 const ffmpeg = require('fluent-ffmpeg');
 const util = require('fluent-ffmpeg-util');
-const { spawn } = require('child_process');
+const { spawn, process } = require('child_process');
 const path = require("path");
 // ffmpeg.setFfmpegPath(ffmpegPath);
 let count = 0;
@@ -113,57 +113,96 @@ app.get("/read", (req, res) => {
     count++;
     res.json(req.count)
 })
+const wait = (second) => {
+    return new Promise((resovle) => {
+        setTimeout(() => {
+            resovle()
+        }, second)
+    })
+}
+
+async function getSegmentFilesFromM3u8(m3u8FilePath, segmentFilePath) {
+    const m3u8Content = await fs.promises.readFile(m3u8FilePath, 'utf8');
+    for (const line of m3u8Content.split('\n')) {
+        if (line.startsWith('#EXTINF:')) {
+            const segmentFileName = m3u8Content.split('\n')[m3u8Content.split('\n').indexOf(line) + 1];
+            await fs.promises.unlink(segmentFilePath + segmentFileName);
+        }
+    }
+    await fs.promises.unlink(m3u8FilePath);
+}
 app.post("/upload", upload.single("file"), async (req, res) => {
     // // return file 
-    const socketID = req.headers["socket-id"];
-    const userIO = io.to(socketID);
+    // const socketID = req.headers["socket-id"];
+    // const userIO = io.to(socketID);
 
     // Lấy file được upload
     const uploadedFile = req.file;
-    console.log({ uploadedFile, userIO })
+    // console.log({ uploadedFile, userIO })
     // return console.log(uploadedFile)
     const hlsOutputPath = `public/hls/`;
     const videoPath = `public/videos/`
     // Chuyển định dạng file sang m3u8
     const fileName = !uploadedFile ? null : Date.now() + '-' + uploadedFile.originalname.toLowerCase().normalize("NFD").replace(/[\u0300-\u036F]/g, "").replace(/đ/g, "d").split(" ").map(item => item.trim()).join("");
-    console.log({fileName})
+    console.log({ fileName })
     const inputFilePath = videoPath + "/" + fileName;
     console.log(inputFilePath)
-    fs.writeFile(inputFilePath, uploadedFile?.buffer, (err) => {
+
+    fs.writeFile(inputFilePath, uploadedFile?.buffer, async (err) => {
         if (err) {
             console.error('Error writing to temporary input file:', err);
         } else {
             const m3u8FilePath = hlsOutputPath + fileName.split(".").slice(0, -1).join("") + ".m3u8";
+            const chunkFile = [m3u8FilePath]
             console.log(m3u8FilePath)
             const command = ffmpeg()
                 .input(inputFilePath)
                 .addOption('-hls_time', 10)
-                .addOption('-hls_list_size', 0)
+                .addOption('-hls_list_size', 5)
                 .addOption('-f', 'hls')
                 .addOption('-codec:v', 'libx264')
                 .addOption('-preset', 'ultrafast')
                 .addOption('-hls_flags', 'delete_segments')
                 .output(m3u8FilePath)
                 .on('progress', function (progress) {
+                    console.log(new Date(progress.timemark).getTime())
                     console.log('Processing: ' + progress.percent + '% done');
-                    userIO.emit("process_percent", progress.percent)
+                    chunkFile.push()
+                    // userIO.emit("process_percent", progress.percent)
                 })
                 .on('end', async () => {
                     console.log('HLS conversion finished.');
                     // Remove the temporary input file
                     await fs.promises.unlink(inputFilePath)
                     console.log("ngừng")
-                    userIO.emit("render-status", { status: "success", filePath: fileName.split(".").slice(0, -1).join("") + ".m3u8" })
+                    // userIO.emit("render-status", { status: "success", filePath: fileName.split(".").slice(0, -1).join("") + ".m3u8" })
                     return res.send('HLS generation completed.');
                 })
                 .on('error', async (err) => {
                     console.error('Error:', err);
                     // Remove the temporary input file
+                    // const outputFiles = await fs.promises.readdir(m3u8FilePath.split('.m3u8')[0]);
+                    // console.log(outputFiles)
+                    await getSegmentFilesFromM3u8(m3u8FilePath, hlsOutputPath)
                     await fs.promises.unlink(inputFilePath)
                     return res.status(500).send('Error generating HLS.');
                 })
-                .run();
+            command.run();
+
+            await wait(2000)
+                .then(() => {
+                    util.pause(command)
+                })
+            await wait(2000)
+                .then(() => {
+                    util.resume(command)
+                })
+            // await wait(10000)
+            //     .then(() => {
+            //         command.kill("")
+            //     })
         }
+
     });
 });
 app.post("/upload-and-listen", upload.single("file"), async (req, res) => {

@@ -8,6 +8,17 @@ import './app/models/associations'
 import './app/models/associations'
 import initApiV1 from "./routes/api_v1.route";
 const app = express();
+//Socket IO Server
+import { Server as HttpServer } from "http";
+import { Server as SocketIOServer } from "socket.io";
+const httpServer = new HttpServer(app);
+const io = new SocketIOServer(httpServer, {
+    cors: "*"
+});
+//Socket IO Server
+import socketService from "./app/services/socket.service";
+
+socketService(io);
 
 //Config .env file
 config();
@@ -50,7 +61,7 @@ sequelize
     console.log('----server start', new Date().toLocaleString('en-US', { timeZone: 'Asia/Jakarta' }));
     console.log('----server process');
 })();
-  
-app.listen(port, async () => {
+
+httpServer.listen(port, async () => {
     console.log("🚀Server started Successfully! Running in port " + port);
 });
