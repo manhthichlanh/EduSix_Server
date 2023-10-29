@@ -8,7 +8,6 @@ export const createSection = async (req, res) => {
         res.status(400).json({ error: error.message });
     }
 };
-
 export const getAllSection = async (req, res) => {
     try {
         const records = await SectionModel.findAll();
@@ -17,7 +16,6 @@ export const getAllSection = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 };
-
 export const getSectionById = async (req, res) => {
     try {
         const record = await SectionModel.findByPk(req.params.id);
@@ -63,7 +61,6 @@ export const updateSection = async (req, res) => {
         res.status(400).json({ error: error.message });
     }
 };
-
 export const deleteSection = async (req, res) => {
     try {
         const record = await SectionModel.findByPk(req.params.id);
