@@ -20,13 +20,12 @@ const CourseModel = sequelize.define("course", {
         type: DataTypes.STRING,
         allowNull: false
     },
-    // price: {
-    //     type: DataTypes.INTEGER,
-    //     allowNull: false,
-    // },
+    course_price: {
+        type: DataTypes.INTEGER,
+        allowNull: true
+    },
     slug: {
         type: DataTypes.STRING,
-
     },
     content: {
         type: DataTypes.TEXT,
@@ -45,10 +44,6 @@ const CourseModel = sequelize.define("course", {
         type: DataTypes.STRING,
         allowNull: false
     },
-    total_course_time: {
-        type: DataTypes.INTEGER,
-        default: 0
-    }
 
 }, {
     createdAt: "created_at",

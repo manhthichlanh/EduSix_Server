@@ -25,6 +25,7 @@ const LessonModel = sequelize.define("lesson", {
     status: {
         type: DataTypes.BOOLEAN,
         comment: "True là hiện, false là ẩn",
+        defaultValue: 1,
         allowNull: false
     },
     type: {

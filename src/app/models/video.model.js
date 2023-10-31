@@ -27,7 +27,7 @@ const VideoModel = sequelize.define("video", {
   status: {
     type: DataTypes.BOOLEAN,
     comment: "True là hiện, false là ẩn",
-    defaultValue: 0,
+    defaultValue: 1,
   },
   type: {
     type: DataTypes.INTEGER,

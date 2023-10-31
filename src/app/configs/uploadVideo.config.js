@@ -5,7 +5,7 @@ const fileFilter = (res, file, cb) => {
   if (file.mimetype.match(/video\/(mp4|ogg|webm)$/)) {
     // Nếu có, cho phép tải lên
     const fileExt = path.extname(file.originalname); // Get the original file extension
-    const fileNameWithoutExt = Date.now() + '-' + file.originalname.replace(fileExt, '').toLowerCase().split(" ").map(item => item.trim()).join(""); // Remove the extension
+    const fileNameWithoutExt = Date.now() + '-' + file.originalname.replace(fileExt, '').toLowerCase().normalize("NFD").replace(/[\u0300-\u036F]/g, "").replace(/đ/g, "d").split(" ").map(item => item.trim()).join(""); // Remove the extension
 
     // Add a new property 'originalname' without the extension
     file.originalname = fileNameWithoutExt;
