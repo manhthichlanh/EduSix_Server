@@ -18,8 +18,6 @@ const io = new SocketIOServer(httpServer, {
 //Socket IO Server
 import socketService from "./app/services/socket.service";
 
-socketService(io);
-
 //Config .env file
 config();
 
@@ -31,10 +29,14 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
+socketService(io);
+
+global._io = io; // Đặt biến toàn cục
+
 initApiV1(app)
 
 const port = process.env.PORT || 8080;
-app.use(express.json());
+// app.use(express.json());
 
 // error handler
 // error handler
