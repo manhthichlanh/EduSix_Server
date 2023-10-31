@@ -1,10 +1,11 @@
 import { Router } from "express";
 import * as initAdminQuery from "../app/controllers/admin-query.controller";
 import { uploadVideoOnMemory } from "../app/configs/uploadVideo.config";
+import { checkRequestVideo, convertToHLS } from "../../middleware/video.middleware";
 const router = Router();
 
 export default function initAdminQueryRoute(app) {
-    router.post("/lesson-with-video", initAdminQuery.createLessonWithVideo);
+    router.post("/lesson-with-video", uploadVideoOnMemory.single("file_videos"), checkRequestVideo, convertToHLS, initAdminQuery.createLessonWithVideo);
     router.post("/upload", uploadVideoOnMemory.single("file"), initAdminQuery.uploadFile)
     // router.post("/create", initQuizz.createQuizz);
     router.get('/getAllLessonQuizz/:lesson_id',initAdminQuery.getAllLessonQuizz)
