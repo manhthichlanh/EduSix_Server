@@ -67,13 +67,17 @@ export async function createLessonQuizz(req, res, next) {
                 content,
                 status: true,
                 type,
-                duration ,
+                duration,
                 ordinal_number,
             }, { transaction: t });
 
+            let durationSet = 0;
+            const defaultTime = 60;
             console.log("hai123");
 
-            const createdQuizzes = await Promise.all(quizzes.map(async (questionData) => {
+            const createdQuizzes = await Promise.all(quizzes.map(async (questionData, index) => {
+                durationSet = (index + 1) * defaultTime;
+                console.log(index + 1)
                 const { question, status, answers } = questionData;
 
                 const newQuiz = await QuizzModel.create({
@@ -98,6 +102,7 @@ export async function createLessonQuizz(req, res, next) {
 
                 return newQuiz;
             }));
+            await LessonQuizzDoc.update({ ordinal_number: LessonQuizzDoc.lesson_id, duration: durationSet  }, { fields: ['ordinal_number', 'duration'], transaction: t });
 
             return { LessonQuizzDoc, createdQuizzes };
         });
