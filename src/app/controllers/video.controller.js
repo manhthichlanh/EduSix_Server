@@ -1,15 +1,13 @@
-// import VideoModel from "../models/video.model";
-// import sequelize from "../models/db";
-// import fs, { existsSync, readFile, unlinkSync } from "fs";
-// import { path as ffmpegPath } from "@ffmpeg-installer/ffmpeg";
+import VideoModel from "../models/video.model";
+import sequelize from "../models/db";
+import fs, { existsSync, readFile, unlinkSync } from "fs";
 // import ffmpeg from "fluent-ffmpeg";
-// ffmpeg.setFfmpegPath(ffmpegPath);
-// import path from "path";
-// const uploadDir = "public/videos";
-// //Nếu không tìm thấy thư mục thì tạo lại
-// if (!existsSync(uploadDir)) {
-//     fs.mkdirSync(uploadDir);
-// }
+import path from "path";
+const uploadDir = "public/videos";
+//Nếu không tìm thấy thư mục thì tạo lại
+if (!existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir);
+}
 
 // //Nếu không tìm thấy thư mục thì tạo lại
 
@@ -50,7 +48,7 @@
 //                 },
 //                 transaction
 //             },)
-            
+
 //             if (created) throw new AppError(500, "fail","Tạo mới database thất bại!")
 
 //             if (uploadedFile) {
@@ -238,42 +236,69 @@
 //         return res.status(501).json({ error })
 //     }
 // };
-// export const getVideoStream = (req, res) => {
-//     const videoName = req.params.videoName;
-//     console.log(req.method)
-//     const videoPath = `public/videos/${videoName}`; // Đường dẫn tới video
-//     // Kiểm tra xem tệp video có tồn tại không
-//     console.log(videoName)
+export const getVideoStream = async (req, res) => {
+    const fileName = req.params.videoName;
+    if (fileName.split(".").slice(0, -1) === "") {
+        res.writeHead(404, { 'Content-Type': 'text/plain' });
+        res.write('file not found: %s\n', fileName);
+        return res.end();
+    }
+    // console.log(fileName)
+    console.log(fileName)
+    const hlsPath = "public/videos/hls/"
+    const filePath = path.join(hlsPath, fileName)
+    // console.log(filePath)
+    if (!fs.existsSync(filePath)) {
+        // console.log("cóa")
+        console.log('file not found: ' + fileName);
+        res.writeHead(404, { 'Content-Type': 'text/plain' });
+        res.write('file not found: %s\n', fileName);
+        res.end();
 
-//     if (!existsSync(videoPath)) {
-//         return res.status(404).json({ error: 'Video not found' });
-//     }
+    }
+    switch (path.extname(fileName)) {
+        case ".m3u8":
+            try {
+                const m3u8Data = fs.readFileSync(filePath, "utf-8");
+                res.setHeader('Content-Type', 'application/vnd.apple.mpegurl');
+                res.end(m3u8Data);
 
-//     const stat = fs.statSync(videoPath);
-//     const fileSize = stat.size;
-//     const range = req.headers.range;
-//     if (range) {
-//         const parts = range.replace(/bytes=/, "").split("-");
-//         const start = parseInt(parts[0], 10);
-//         const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
-//         const chunksize = (end - start) + 1;
-//         const file = fs.createReadStream(videoPath, { start, end });
-//         const head = {
-//             'Content-Range': `bytes ${start}-${end}/${fileSize}`,
-//             'Accept-Ranges': 'bytes',
-//             'Content-Length': chunksize,
-//             'Content-Type': 'video/mp2t',
-//         };
+            } catch (error) {
+                console.log(error)
+            }
+            break;
+        case ".ts":
+            const stat = fs.statSync(filePath);
+            const fileSize = stat.size;
+            const range = req.headers.range;
+            if (range) {
+                const parts = range.replace(/bytes=/, "").split("-");
+                const start = parseInt(parts[0], 10);
+                const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
+                const chunksize = (end - start) + 1;
+                const file = fs.createReadStream(filePath, { start, end });
+                const head = {
+                    'Content-Range': `bytes ${start}-${end}/${fileSize}`,
+                    'Accept-Ranges': 'bytes',
+                    'Content-Length': chunksize,
+                    'Content-Type': 'video/mp2t',
+                };
 
-//         res.writeHead(206, head);
-//         file.pipe(res);
-//     } else {
-//         const head = {
-//             'Content-Length': fileSize,
-//             'Content-Type': 'video/mp2t',
-//         };
-//         res.writeHead(200, head);
-//         fs.createReadStream(videoPath).pipe(res);
-//     }
-// };
+                res.writeHead(206, head);
+                file.pipe(res);
+            } else {
+                const head = {
+                    'Content-Length': fileSize,
+                    'Content-Type': 'video/mp2t',
+                };
+                res.writeHead(200, head);
+                fs.createReadStream(filePath).pipe(res);
+            }
+            break;
+        default:
+
+            break;
+    }
+}
+
 

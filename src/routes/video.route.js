@@ -10,8 +10,6 @@ export default function (app) {
     router.get("/:id", initVideo.getVideoById)
     router.delete("/:id", initVideo.deleteVideo)
     router.put("/:id",
-        // upload.none(),
-        // uploadVideo.single("file_videos"), 
         uploadVideoOnMemory.single("file_videos"),
         checkRequestVideo,
         initVideo.updateVideo)
@@ -19,7 +17,6 @@ export default function (app) {
     router.get("/stream/:videoName", initVideo.getVideoStream)
 
     router.post("/",
-        // uploadVideo.single("file_videos"),
         uploadVideoOnMemory.single("file_videos"),
         checkRequestVideo,
         initVideo.createVideo

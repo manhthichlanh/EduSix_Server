@@ -4,8 +4,10 @@ import QuizzModel from "./../models/quizz.models";
 import AnswerModel from "../models/answer.model";
 import AppError from "../../utils/appError";
 import sequelize from "../models/db";
+import path from "path";
+import fs from "fs"
 export const createLessonWithVideo = async (req, res) => {
-    const { section_id, name, content, lesson_type, file_videos, youtube_id, duration, video_type,fileName } = req.body;
+    const { section_id, name, content, lesson_type, file_videos, youtube_id, duration, video_type, fileName } = req.body;
     try {
         await sequelize.transaction(async (t) => {
             // Tạo bài học mới
@@ -30,6 +32,8 @@ export const createLessonWithVideo = async (req, res) => {
         return res.status(error.status ? error.status : 500).json({ message: error.message })
     }
 }
+
+
 export const uploadFile = async (req, res) => {
     const uploadedFile = req.file;
     await convertToHLS(uploadedFile, res);
