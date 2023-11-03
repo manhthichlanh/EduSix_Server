@@ -2,7 +2,7 @@ import ffmpeg from "fluent-ffmpeg";
 import path from "path";
 import fs from "fs";
 import LessonModel from "../src/app/models/lesson.model";
-import { findVideoDuration, switchAction, getAndDeleteHLSFile, wait } from "../src/utils/util.helper";
+import { findVideoDuration, getAndDeleteHLSFile, switchAction } from "../src/utils/util.helper";
 import { fetchYoutube } from "../src/utils/googleAPI";
 export const checkRequestVideo = async (req, res, next) => {
     const { lesson_id, youtube_id, lesson_type } = req.body;
@@ -43,18 +43,17 @@ export const checkRequestVideo = async (req, res, next) => {
     }
 }
 export const convertToHLS = async (req, res, next) => {
+    // console.log(_initEmitter(123))
     if (req.body.lesson_type != 1) return next();
     const hlsPath = `public/videos/hls/`;
     const videoPath = `public/videos/`;
+    if (!fs.existsSync(videoPath)) await fs.promises.mkdir(videoPath)
     const uploadedFile = req.file;
-    const socketID = req.headers["socket-id"];
-    const status = {
-        status : "pending",
-        process_percent: 0,
 
-    }
-    if (socketID) return res.status(400).json({ message: "CLient chưa kết nối socket-id!" })
-    const userIO = _io.to(socketID);
+    const socketID = req.headers["socket-id"];
+
+    if (!socketID) return res.status(400).json({ message: "CLient chưa kết nối socket-id!" })
+
     const fileName = !uploadedFile ? null : uploadedFile.originalname;
     const inputFilePath = path.join(videoPath, fileName);
     await fs.promises.writeFile(inputFilePath, uploadedFile?.buffer)
@@ -68,17 +67,21 @@ export const convertToHLS = async (req, res, next) => {
         .addOption('-preset', 'ultrafast')
         .addOption('-hls_flags', 'delete_segments')
         .output(m3u8FilePath)
-        .on('progress', function (progress) {
-            console.log('Processing: ' + progress.percent + '% done');
-            userIO.emit("process_percent", progress.percent)
+        .on('start', function () {
+            console.log("start");
+            // console.log(
+            console.log("socketSide id:" + socketID)
+        
+            _initEmitter(socketID).emit("init_ffmpeg_command", command)
+            // )
         })
+
         .on('end', async () => {
             console.log('HLS conversion finished.');
             // Remove the temporary input file
             await fs.promises.unlink(inputFilePath)
             console.log("ngừng")
             req.body.fileName = fileName;
-            // userIO.emit("render-status", { status: "success", filePath: fileName.split(".").slice(0, -1).join("") + ".m3u8" })
             next();
         })
         .on('error', async (err) => {
@@ -95,33 +98,4 @@ export const convertToHLS = async (req, res, next) => {
 
     command.run();
 
-    const selectAction = switchAction(command);
-
-    userIO.on("process-action", (action) => {
-        let status = ""
-            switch (action) {
-                case "pause":
-                    selectAction.Pause();
-                    status = "";
-                    break;
-                case "remuse":
-                    selectAction.Remuse();
-                    break;
-                case "cancle":
-                    selectAction.Cancel();
-                    break;
-                default:
-                    break;
-            }
-            // userIO.emit("process-status", {status: })
-
-    })
-
-    // await wait(2000)
-    //     .then(() => {
-    //     })
-    // await wait(3000)
-    //     .then(() => {
-    //         selectAction.Cancel();
-    //     })
 }
