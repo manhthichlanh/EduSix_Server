@@ -1,11 +1,14 @@
 import LessonModel from "../models/lesson.model";
 import VideoModel from "../models/video.model";
 import QuizzModel from "./../models/quizz.models";
+import SectionModel from "./../models/section.model"
 import AnswerModel from "../models/answer.model";
 import AppError from "../../utils/appError";
 import sequelize from "../models/db";
 import path from "path";
 import fs from "fs"
+import { ReE, ReS } from '../../utils/util.service';
+
 export const createLessonWithVideo = async (req, res) => {
     const { section_id, name, content, lesson_type, file_videos, youtube_id, duration, video_type, fileName } = req.body;
     try {
@@ -61,13 +64,14 @@ export async function createLessonQuizz(req, res, next) {
         const { section_id, name, content, type, duration, ordinal_number, quizzes } = req.body;
 
         const result = await sequelize.transaction(async (t) => {
+
             const LessonQuizzDoc = await LessonModel.create({
                 section_id,
                 name,
                 content,
+                duration,
                 status: true,
                 type,
-                duration ,
                 ordinal_number,
             }, { transaction: t });
 
@@ -94,7 +98,6 @@ export async function createLessonQuizz(req, res, next) {
                         })), { transaction: t }
                     );
                 }
-                console.log("run complete");
 
                 return newQuiz;
             }));
@@ -108,27 +111,6 @@ export async function createLessonQuizz(req, res, next) {
     }
 }
 
-// Tạo một bài kiểm tra mới liên quan đến bài học vừa tạo
-// Tạo một bài kiểm tra mới liên quan đến bài học vừa tạo
-// const newQuizz = await QuizzModel.create({
-//     question,
-//     lesson_id: LessonQuizzDoc.lesson_id, // Liên kết bài kiểm tra với bài học vừa tạo
-//     status: 0, // Hoặc giá trị khác tùy theo yêu cầu
-// }, { transaction: t });
-
-// if (answers && answers.length > 0) {
-//     // Tạo các câu trả lời cho bài kiểm tra
-//     const answerRecords = await AnswerModel.bulkCreate(
-//         answers.map((answer) => ({
-//             answer: answer.answer,
-//             isCorrect: answer.isCorrect,
-//             quizz_id: newQuizz.id, // Liên kết câu trả lời với bài kiểm tra mới tạo
-//             explain: answer.explain,
-//         })), { transaction: t }
-//     );
-// }
-
-// If everything was successful, commit the transaction
 export async function deleteLessonQuizz(req, res, next) {
     const { lesson_id } = req.params; // Get lesson_id from req.params
 
@@ -177,6 +159,34 @@ export async function deleteLessonQuizz(req, res, next) {
                 res.status(404).json({ message: "Không tìm thấy câu hỏi cho bài học này" });
             }
         })
+    } catch (error) {
+        next(error);
+    }
+}
+export async function getAllLessonQuizzVideo(req, res, next) {
+    try {
+        const section_id = req.params.section_id;
+
+        const LessonDoc = await LessonModel.findAll({
+            where: { section_id: section_id },
+            attributes: ['lesson_id', 'section_id', 'name', 'content', 'status', 'type', 'duration', 'ordinal_number'],
+            include: [{
+                model: VideoModel,
+                attributes: ['video_id', 'lesson_id', 'file_videos', 'youtube_id', 'duration', 'status', 'type']
+            },
+            {
+                model: QuizzModel,
+                attributes: ['id', 'question', 'process', 'status', 'lesson_id']
+            }
+            ]
+        })
+        return ReS(
+            res,
+            {
+                LessonDoc
+            },
+            200
+        );
     } catch (error) {
         next(error);
     }
