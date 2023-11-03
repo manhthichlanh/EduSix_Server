@@ -57,53 +57,78 @@ export async function getAllLessonQuizz(req, res, next) {
 }
 
 export async function createLessonQuizz(req, res, next) {
-    // const t = await sequelize.transaction();
     try {
-        const { section_id, name, content, type, duration, ordinal_number, question, answers } = req.body;
+        const { section_id, name, content, type, duration, ordinal_number, quizzes } = req.body;
 
-        await sequelize.transaction(async (t) => {
-            // Tạo một bài học mới
+        const result = await sequelize.transaction(async (t) => {
             const LessonQuizzDoc = await LessonModel.create({
                 section_id,
                 name,
                 content,
-                status: true, // Hoặc giá trị khác tùy theo yêu cầu
+                status: true,
                 type,
-                duration,
+                duration ,
                 ordinal_number,
             }, { transaction: t });
+
             console.log("hai123");
 
-            // Tạo một bài kiểm tra mới liên quan đến bài học vừa tạo
-            // Tạo một bài kiểm tra mới liên quan đến bài học vừa tạo
-            const newQuizz = await QuizzModel.create({
-                question,
-                lesson_id: LessonQuizzDoc.lesson_id, // Liên kết bài kiểm tra với bài học vừa tạo
-                status: 0, // Hoặc giá trị khác tùy theo yêu cầu
-            }, { transaction: t });
+            const createdQuizzes = await Promise.all(quizzes.map(async (questionData) => {
+                const { question, status, answers } = questionData;
 
-            if (answers && answers.length > 0) {
-                // Tạo các câu trả lời cho bài kiểm tra
-                const answerRecords = await AnswerModel.bulkCreate(
-                    answers.map((answer) => ({
-                        answer: answer.answer,
-                        isCorrect: answer.isCorrect,
-                        quizz_id: newQuizz.id, // Liên kết câu trả lời với bài kiểm tra mới tạo
-                        explain: answer.explain,
-                    })), { transaction: t }
-                );
-            }
-            // If everything was successful, commit the transaction
-            res.json({ LessonQuizzDoc, newQuizz });
-        })
+                const newQuiz = await QuizzModel.create({
+                    question,
+                    lesson_id: LessonQuizzDoc.lesson_id,
+                    status,
+                }, { transaction: t });
 
+                console.log("run Question", newQuiz);
+
+                if (answers && answers.length > 0) {
+                    const answerRecords = await AnswerModel.bulkCreate(
+                        answers.map((answer) => ({
+                            answer: answer.answer,
+                            isCorrect: answer.isCorrect,
+                            quizz_id: newQuiz.id,
+                            explain: answer.explain,
+                        })), { transaction: t }
+                    );
+                }
+                console.log("run complete");
+
+                return newQuiz;
+            }));
+
+            return { LessonQuizzDoc, createdQuizzes };
+        });
+
+        res.json(result);
     } catch (error) {
-        // If there's an error, rollback the transaction
-        // await t.rollback();
         next(error);
     }
 }
 
+// Tạo một bài kiểm tra mới liên quan đến bài học vừa tạo
+// Tạo một bài kiểm tra mới liên quan đến bài học vừa tạo
+// const newQuizz = await QuizzModel.create({
+//     question,
+//     lesson_id: LessonQuizzDoc.lesson_id, // Liên kết bài kiểm tra với bài học vừa tạo
+//     status: 0, // Hoặc giá trị khác tùy theo yêu cầu
+// }, { transaction: t });
+
+// if (answers && answers.length > 0) {
+//     // Tạo các câu trả lời cho bài kiểm tra
+//     const answerRecords = await AnswerModel.bulkCreate(
+//         answers.map((answer) => ({
+//             answer: answer.answer,
+//             isCorrect: answer.isCorrect,
+//             quizz_id: newQuizz.id, // Liên kết câu trả lời với bài kiểm tra mới tạo
+//             explain: answer.explain,
+//         })), { transaction: t }
+//     );
+// }
+
+// If everything was successful, commit the transaction
 export async function deleteLessonQuizz(req, res, next) {
     const { lesson_id } = req.params; // Get lesson_id from req.params
 
@@ -115,7 +140,7 @@ export async function deleteLessonQuizz(req, res, next) {
                     lesson_id: lesson_id
                 }
             }, { transaction: t });
-      
+
             if (quizzes && quizzes.length > 0) {
                 // Iterate through quizzes and delete them one by one
                 for (const quiz of quizzes) {
@@ -126,7 +151,7 @@ export async function deleteLessonQuizz(req, res, next) {
                         where: {
                             lesson_id: lesson_id
                         }
-                    },{ transaction: t })
+                    }, { transaction: t })
 
                     // Delete all answers related to the quiz
                     await AnswerModel.destroy({
@@ -152,7 +177,7 @@ export async function deleteLessonQuizz(req, res, next) {
                 res.status(404).json({ message: "Không tìm thấy câu hỏi cho bài học này" });
             }
         })
-        } catch (error) {
-            next(error);
-        }
+    } catch (error) {
+        next(error);
     }
+}
