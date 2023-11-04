@@ -23,32 +23,31 @@ export const createCourse = async (req, res) => {
         }
 
         // Tạo khóa học
-        const { category_id, user_id, name, slug, content, status, type } = req.body;
-        const fileName = Date.now() + '-' + uploadedFile.originalname.toLowerCase().split(" ").map(item => item.trim()).join("");
+        const { category_id, user_id, name, course_price, slug, content, status, type } = req.body;
+        const fileName = uploadedFile.originalname;
 
-        await sequelize.transaction(async (transaction) => {
-            const newRecord = await CourseModel.create(
-                {
-                    category_id,
-                    user_id,
-                    name,
-                    number_of_lessons: 0,
-                    slug,
-                    content,
-                    status,
-                    type,
-                    thumbnail: fileName,
-                    total_course_time: 0
-                },
-                { transaction }
-            );
-            // Lưu tệp thumbnail
-            const filePath = path.join(uploadDir, fileName);
+            await sequelize.transaction(async (transaction) => {
+                const newRecord = await CourseModel.create(
+                    {
+                        category_id,
+                        user_id,
+                        name,
+                        course_price,
+                        slug,
+                        content,
+                        status,
+                        type,
+                        thumbnail: fileName,
+                    },
+                    { transaction }
+                );
+                // Lưu tệp thumbnail
+                const filePath = path.join(uploadDir, fileName);
 
-            await fs.promises.writeFile(filePath, uploadedFile?.buffer);
-            // Trả về phản hồi thành công
-            return res.status(201).json(newRecord);
-        })
+                await fs.promises.writeFile(filePath, uploadedFile?.buffer);
+                // Trả về phản hồi thành công
+                return res.status(201).json(newRecord);
+            })
     } catch (error) {
         // Trả về phản hồi lỗi
         res.status(500).json({ error: error.message });
@@ -176,6 +175,6 @@ export const getImage = async (req, res) => {
         file = await fs.promises.readFile(filePath(fileName));
         return res.status(200).send(file)
     } catch (error) {
-        return res.status(404).json({message: "Không tìm thấy file!"})
+        return res.status(404).json({ message: "Không tìm thấy file!" })
     }
 }

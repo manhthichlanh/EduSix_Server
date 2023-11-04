@@ -3,6 +3,7 @@ import VideoModel from "../models/video.model";
 import QuizzModel from "./../models/quizz.models";
 import SectionModel from "./../models/section.model"
 import AnswerModel from "../models/answer.model";
+import { generateRandomNumberWithRandomDigits } from "../../utils/util.helper";
 import AppError from "../../utils/appError";
 import sequelize from "../models/db";
 import path from "path";
@@ -12,10 +13,11 @@ import { ReE, ReS } from '../../utils/util.service';
 export const createLessonWithVideo = async (req, res) => {
     const { section_id, name, content, lesson_type, file_videos, youtube_id, duration, video_type, fileName } = req.body;
     try {
+        const ordinal_number = generateRandomNumberWithRandomDigits(1, 3);
         await sequelize.transaction(async (t) => {
             // Tạo bài học mới
             const newLesson = await LessonModel.create({
-                section_id, name, content, type: lesson_type, duration, ordinal_number: null
+                section_id, name, content, type: lesson_type, duration, ordinal_number
             }, { transaction: t });
             //Cập nhật trường thứ tự (ordinal_number = lesson_id) của lesson vừa tạo
             await newLesson.update({ ordinal_number: newLesson.lesson_id }, { fields: ['ordinal_number'], transaction: t });
@@ -28,22 +30,25 @@ export const createLessonWithVideo = async (req, res) => {
                 type: video_type
             }, { transaction: t })
 
-            res.status(201).json({ lesson: newLesson, video: newVideo });
+            if (newLesson.type == 1) {
+                req.body.lessonWithVideo = { lesson: newLesson, video: newVideo }
+                req.body.fileName = fileName;
+                next();
+            }
+            else
+                res.status(201).json({ lesson: newLesson, video: newVideo });
         });
     } catch (error) {
         console.log(error)
         return res.status(error.status ? error.status : 500).json({ message: error.message })
     }
 }
-
-
 export const uploadFile = async (req, res) => {
     const uploadedFile = req.file;
     await convertToHLS(uploadedFile, res);
     // await convertToHLS(uploadedFile, res);
     console.log(_io)
 }
-
 //Lesson And quizz
 export async function getAllLessonQuizz(req, res, next) {
     try {
@@ -58,11 +63,11 @@ export async function getAllLessonQuizz(req, res, next) {
         next(error)
     }
 }
-
 export async function createLessonQuizz(req, res, next) {
     try {
-        const { section_id, name, content, type, duration, ordinal_number, quizzes } = req.body;
-
+        const { section_id, name, content, lesson_type, quizzes } = req.body;
+        const duration = generateRandomNumberWithRandomDigits(1, 3);
+        const ordinal_number = duration;
         const result = await sequelize.transaction(async (t) => {
 
             const LessonQuizzDoc = await LessonModel.create({
@@ -75,18 +80,33 @@ export async function createLessonQuizz(req, res, next) {
                 ordinal_number,
             }, { transaction: t });
 
+            let durationSet = 0;
+            const defaultTime = 60;
             console.log("hai123");
 
-            const createdQuizzes = await Promise.all(quizzes.map(async (questionData) => {
-                const { question, status, answers } = questionData;
+            const createdQuizzes = await Promise.all(quizzes.map(async (questionData, index) => {
+                durationSet = (index + 1) * defaultTime;
+                console.log(index + 1)
+                const { question, status, answers, answer_type } = questionData;
 
                 const newQuiz = await QuizzModel.create({
                     question,
+                    answer_type,
                     lesson_id: LessonQuizzDoc.lesson_id,
                     status,
                 }, { transaction: t });
-
+                // return newQuiz
                 console.log("run Question", newQuiz);
+                if (!(answers && answers.length > 0)) { throw new AppError(400, "fail", "Bạn vui lòng nhập thêm các câu trả lời cho câu hỏi!") }
+                const newAnswer = await AnswerModel.bulkCreate(
+                    answers.map((answer) => ({
+                        answer: answer.answer,
+                        is_correct: answer.isCorrect,
+                        quizz_id: newQuiz.id,
+                        explain: answer.explain,
+                    })), { transaction: t }
+                );
+                console.log(newAnswer)
 
                 if (answers && answers.length > 0) {
                     const answerRecords = await AnswerModel.bulkCreate(
@@ -99,12 +119,17 @@ export async function createLessonQuizz(req, res, next) {
                     );
                 }
 
-                return newQuiz;
+                return {
+                    question: newQuiz.question,
+                    status: newQuiz.status,
+                    answer_type: newQuiz.answer_type,
+                    answers: newAnswer,
+                };
             }));
+            await LessonQuizzDoc.update({ ordinal_number: LessonQuizzDoc.lesson_id, duration: durationSet }, { fields: ['ordinal_number', 'duration'], transaction: t });
 
             return { LessonQuizzDoc, createdQuizzes };
         });
-
         res.json(result);
     } catch (error) {
         next(error);

@@ -14,8 +14,8 @@ const QuizzModel = sequelize.define("quizz", {
         type: DataTypes.STRING,
         allowNull: false,
     },
-    process: {
-        type: DataTypes.FLOAT,
+    answer_type: {
+        type: DataTypes.STRING,
     },
     status: {
         type: DataTypes.BOOLEAN,
