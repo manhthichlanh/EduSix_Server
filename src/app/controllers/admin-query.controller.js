@@ -8,19 +8,18 @@ import sequelize from "../models/db";
 import path from "path";
 import fs from "fs"
 export const createLessonWithVideo = async (req, res, next) => {
-    const { section_id, name, content, lesson_type, youtube_id, video_type } = req.body;
+    const { section_id, name, content, lesson_type, youtube_id, duration, video_type } = req.body;
     const uploadedFile = req.file;
     const fileName = !uploadedFile ? null : uploadedFile.originalname;
     try {
-        const duration = generateRandomNumberWithRandomDigits(1, 3);
-        const ordinal_number = duration;
+        const ordinal_number = generateRandomNumberWithRandomDigits(1, 3);
         await sequelize.transaction(async (t) => {
             // Tạo bài học mới
             const newLesson = await LessonModel.create({
                 section_id, name, content, type: lesson_type, duration, ordinal_number
             }, { transaction: t });
             //Cập nhật trường thứ tự (ordinal_number = lesson_id) của lesson vừa tạo
-            await newLesson.update({ ordinal_number: newLesson.lesson_id, duration }, { fields: ['ordinal_number',['duration']], transaction: t });
+            await newLesson.update({ ordinal_number: newLesson.lesson_id }, { fields: ['ordinal_number'], transaction: t });
             //Tạo video mới 
             const newVideo = await VideoModel.create({
                 lesson_id: newLesson.lesson_id,
@@ -43,15 +42,12 @@ export const createLessonWithVideo = async (req, res, next) => {
         return res.status(error.status ? error.status : 500).json({ message: error.message })
     }
 }
-
-
 export const uploadFile = async (req, res) => {
     const uploadedFile = req.file;
     await convertToHLS(uploadedFile, res);
     // await convertToHLS(uploadedFile, res);
     console.log(_io)
 }
-
 //Lesson And quizz
 export async function getAllLessonQuizz(req, res, next) {
     try {
@@ -66,7 +62,6 @@ export async function getAllLessonQuizz(req, res, next) {
         next(error)
     }
 }
-
 export async function createLessonQuizz(req, res, next) {
     try {
         const { section_id, name, content, lesson_type, quizzes } = req.body;
@@ -124,7 +119,6 @@ export async function createLessonQuizz(req, res, next) {
 
             return { LessonQuizzDoc, createdQuizzes };
         });
-
         res.json(result);
     } catch (error) {
         next(error);
