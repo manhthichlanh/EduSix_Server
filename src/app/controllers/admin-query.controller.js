@@ -2,17 +2,22 @@ import LessonModel from "../models/lesson.model";
 import VideoModel from "../models/video.model";
 import QuizzModel from "./../models/quizz.models";
 import AnswerModel from "../models/answer.model";
+import { generateRandomNumberWithRandomDigits } from "../../utils/util.helper";
 import AppError from "../../utils/appError";
 import sequelize from "../models/db";
 import path from "path";
 import fs from "fs"
-export const createLessonWithVideo = async (req, res) => {
-    const { section_id, name, content, lesson_type, file_videos, youtube_id, duration, video_type, fileName } = req.body;
+export const createLessonWithVideo = async (req, res, next) => {
+    const { section_id, name, content, lesson_type, youtube_id, video_type } = req.body;
+    const uploadedFile = req.file;
+    const fileName = !uploadedFile ? null : uploadedFile.originalname;
     try {
+        const duration = generateRandomNumberWithRandomDigits(1, 3);
+        const ordinal_number = duration;
         await sequelize.transaction(async (t) => {
             // Tạo bài học mới
             const newLesson = await LessonModel.create({
-                section_id, name, content, type: lesson_type, duration, ordinal_number: null
+                section_id, name, content, type: lesson_type, duration, ordinal_number
             }, { transaction: t });
             //Cập nhật trường thứ tự (ordinal_number = lesson_id) của lesson vừa tạo
             await newLesson.update({ ordinal_number: newLesson.lesson_id }, { fields: ['ordinal_number'], transaction: t });
@@ -25,7 +30,13 @@ export const createLessonWithVideo = async (req, res) => {
                 type: video_type
             }, { transaction: t })
 
-            res.status(201).json({ lesson: newLesson, video: newVideo });
+            if (newLesson.type == 1) {
+                req.body.lessonWithVideo = { lesson: newLesson, video: newVideo }
+                req.body.fileName = fileName;
+                next();
+            }
+            else
+                res.status(201).json({ lesson: newLesson, video: newVideo });
         });
     } catch (error) {
         console.log(error)
@@ -58,15 +69,16 @@ export async function getAllLessonQuizz(req, res, next) {
 
 export async function createLessonQuizz(req, res, next) {
     try {
-        const { section_id, name, content, type, duration, ordinal_number, quizzes } = req.body;
-
+        const { section_id, name, content, lesson_type, quizzes } = req.body;
+        const duration = generateRandomNumberWithRandomDigits(1, 3);
+        const ordinal_number = duration;
         const result = await sequelize.transaction(async (t) => {
             const LessonQuizzDoc = await LessonModel.create({
                 section_id,
                 name,
                 content,
                 status: true,
-                type,
+                type: lesson_type,
                 duration,
                 ordinal_number,
             }, { transaction: t });
@@ -78,31 +90,37 @@ export async function createLessonQuizz(req, res, next) {
             const createdQuizzes = await Promise.all(quizzes.map(async (questionData, index) => {
                 durationSet = (index + 1) * defaultTime;
                 console.log(index + 1)
-                const { question, status, answers } = questionData;
+                const { question, status, answers, answer_type } = questionData;
 
                 const newQuiz = await QuizzModel.create({
                     question,
+                    answer_type,
                     lesson_id: LessonQuizzDoc.lesson_id,
                     status,
                 }, { transaction: t });
-
+                // return newQuiz
                 console.log("run Question", newQuiz);
+                if (!(answers && answers.length > 0)) { throw new AppError(400, "fail", "Bạn vui lòng nhập thêm các câu trả lời cho câu hỏi!") }
+                const newAnswer = await AnswerModel.bulkCreate(
+                    answers.map((answer) => ({
+                        answer: answer.answer,
+                        is_correct: answer.isCorrect,
+                        quizz_id: newQuiz.id,
+                        explain: answer.explain,
+                    })), { transaction: t }
+                );
+                console.log(newAnswer)
 
-                if (answers && answers.length > 0) {
-                    const answerRecords = await AnswerModel.bulkCreate(
-                        answers.map((answer) => ({
-                            answer: answer.answer,
-                            isCorrect: answer.isCorrect,
-                            quizz_id: newQuiz.id,
-                            explain: answer.explain,
-                        })), { transaction: t }
-                    );
-                }
                 console.log("run complete");
 
-                return newQuiz;
+                return {
+                    question: newQuiz.question,
+                    status: newQuiz.status,
+                    answer_type: newQuiz.answer_type,
+                    answers: newAnswer,
+                };
             }));
-            await LessonQuizzDoc.update({ ordinal_number: LessonQuizzDoc.lesson_id, duration: durationSet  }, { fields: ['ordinal_number', 'duration'], transaction: t });
+            await LessonQuizzDoc.update({ ordinal_number: LessonQuizzDoc.lesson_id, duration: durationSet }, { fields: ['ordinal_number', 'duration'], transaction: t });
 
             return { LessonQuizzDoc, createdQuizzes };
         });

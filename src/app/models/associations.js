@@ -33,3 +33,6 @@ AnswerModel.belongsTo(QuizzModel, { foreignKey: "quizz_id",as:"relaAnswer"});
 //Quan hệ giữa Quizz và Lesson
 LessonModel.hasMany(QuizzModel, { foreignKey: "lesson_id"});
 QuizzModel.belongsTo(LessonModel, { foreignKey: "lesson_id"});
+//Quan hệ giữa Quizz và Answer
+QuizzModel.hasMany(AnswerModel, { foreignKey: "quizz_id"});
+AnswerModel.belongsTo(QuizzModel, { foreignKey: "quizz_id"});

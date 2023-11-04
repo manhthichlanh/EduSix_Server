@@ -42,9 +42,9 @@ export const checkRequestVideo = async (req, res, next) => {
         return res.status(401).json({ message: `Bài học theo lesson_id:${lesson_id} trên đã tồn tại!` })
     }
 }
-export const convertToHLS = async (req, res, next) => {
+export const convertToHLS = async (req, res) => {
     // console.log(_initEmitter(123))
-    if (req.body.lesson_type != 1) return next();
+    const { fileName, lessonWithVideo } = req.body;
     const hlsPath = `public/videos/hls/`;
     const videoPath = `public/videos/`;
     if (!fs.existsSync(videoPath)) await fs.promises.mkdir(videoPath)
@@ -52,9 +52,7 @@ export const convertToHLS = async (req, res, next) => {
 
     const socketID = req.headers["socket-id"];
 
-    if (!socketID) return res.status(400).json({ message: "CLient chưa kết nối socket-id!" })
-
-    const fileName = !uploadedFile ? null : uploadedFile.originalname;
+    if (!socketID) return res.status(400).json({ message: "Client chưa kết nối socket-id!" })
     const inputFilePath = path.join(videoPath, fileName);
     await fs.promises.writeFile(inputFilePath, uploadedFile?.buffer)
     const m3u8FilePath = path.join(hlsPath, fileName + ".m3u8");
@@ -71,7 +69,7 @@ export const convertToHLS = async (req, res, next) => {
             console.log("start");
             // console.log(
             console.log("socketSide id:" + socketID)
-        
+
             _initEmitter(socketID).emit("init_ffmpeg_command", command)
             // )
         })
@@ -82,7 +80,7 @@ export const convertToHLS = async (req, res, next) => {
             await fs.promises.unlink(inputFilePath)
             console.log("ngừng")
             req.body.fileName = fileName;
-            next();
+            return res.status(201).json(lessonWithVideo);
         })
         .on('error', async (err) => {
             console.error('Error:', err);
@@ -92,7 +90,7 @@ export const convertToHLS = async (req, res, next) => {
                 return res.status(500).json({ messge: err })
             } catch (error) {
                 console.log(error)
-                return res.status(500).json({ messge: error?.message })
+                return res.status(500).json({ message: error?.message })
             }
         });
 
