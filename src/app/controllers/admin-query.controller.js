@@ -9,7 +9,7 @@ import sequelize from "../models/db";
 import path from "path";
 import fs from "fs"
 import { ReE, ReS } from '../../utils/util.service';
-const {Op} = require('sequelize');
+
 export const createLessonWithVideo = async (req, res) => {
     const { section_id, name, content, lesson_type, file_videos, youtube_id, duration, video_type, fileName } = req.body;
     try {
@@ -199,13 +199,11 @@ export async function getAllLessonQuizzVideo(req, res, next) {
                 {
                     model: VideoModel,
                     attributes: ['video_id', 'lesson_id', 'file_videos', 'youtube_id', 'duration', 'status', 'type'],
-                    required: false, // Include VideoModel conditionally
-                    where: { type: { [Op.in]: [0, 1] } } // Include VideoModel when Lesson's type is 0 or 1
+             
                 },
                 {
                     model: QuizzModel,
-                    required: false, // Include QuizzModel conditionally
-                    where: { type: 2 } // Include QuizzModel when Lesson's type is 2
+              
                 }
             ]
         });
