@@ -16,6 +16,32 @@ export const getAllSection = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 };
+export const SectionPage = async (req, res, next) => {
+    try {
+        const page = parseInt(req.query.page, 5) || 1;
+        const page_size = parseInt(req.query.page_size, 5) || 5;
+
+        const offset = (page - 1) * page_size;
+        
+        const { count, rows } = await SectionModel.findAndCountAll({
+            limit: page_size,
+            offset: offset
+        });
+
+        res.status(200).json({
+            status: 'success',
+            data: {
+                totalItems: count,
+                totalPages: Math.ceil(count / page_size),
+                currentPage: page,
+                pageSize: page_size,
+                courses: rows
+            }
+        });
+    } catch (error) {
+        next(error);
+    }
+};
 export const getSectionById = async (req, res) => {
     try {
         const record = await SectionModel.findByPk(req.params.id);

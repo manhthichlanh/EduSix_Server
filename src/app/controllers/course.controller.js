@@ -67,6 +67,32 @@ export const getAllCourse = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 };
+export const coursePage = async (req, res, next) => {
+    try {
+        const page = parseInt(req.query.page, 5) || 1;
+        const page_size = parseInt(req.query.page_size, 5) || 5;
+
+        const offset = (page - 1) * page_size;
+        
+        const { count, rows } = await CourseModel.findAndCountAll({
+            limit: page_size,
+            offset: offset
+        });
+
+        res.status(200).json({
+            status: 'success',
+            data: {
+                totalItems: count,
+                totalPages: Math.ceil(count / page_size),
+                currentPage: page,
+                pageSize: page_size,
+                courses: rows
+            }
+        });
+    } catch (error) {
+        next(error);
+    }
+};
 export const getCourseById = async (req, res) => {
     try {
         const record = await CourseModel.findByPk(req.params.id);

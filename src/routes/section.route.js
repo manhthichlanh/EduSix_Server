@@ -5,6 +5,7 @@ const router = Router();
 
 export default function initSectionRoute(app) {
     router.get("/", initSection.getAllSection);
+    router.get("/page", initSection.SectionPage);
     router.get("/:id/course", initSection.getSectionCourse);
     router.get("/:id", initSection.getSectionById);
     router.post("/", initSection.createSection);
