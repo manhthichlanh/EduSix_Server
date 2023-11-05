@@ -188,10 +188,10 @@ export async function deleteLessonQuizz(req, res, next) {
 }
 export async function getAllSectionLessonQuizzVideo(req, res, next) {
     try {
-        const section_id = req.params.section_id;
+        const course_id = req.params.course_id;
 
-        const LessonDoc = await LessonModel.findAll({
-            where: { section_id: section_id },
+        const LessonDoc = await SectionModel.findAll({
+            where: { course_id: course_id },
             attributes: ['lesson_id', 'section_id', 'name', 'content', 'status', 'type', 'duration', 'ordinal_number'],
             include:
                 [
