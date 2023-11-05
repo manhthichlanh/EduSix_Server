@@ -3,7 +3,6 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { readFileSync } from "fs";
 import path from "path";
-
 export const getAllUser = async (req, res) => {
     try {
         const nhanvien = await UserModel.findAll();
@@ -11,8 +10,7 @@ export const getAllUser = async (req, res) => {
     } catch (error) {
         console.log(error);
         res.sendStatus(501)
-    }
-
+}
 }
 
 export const getCourseById = async (req, res) => {

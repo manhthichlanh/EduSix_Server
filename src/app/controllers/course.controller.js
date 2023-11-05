@@ -23,7 +23,7 @@ export const createCourse = async (req, res) => {
         }
 
         // Tạo khóa học
-        const { category_id, user_id, name, slug, content, status, type } = req.body;
+        const { category_id, user_id, name,course_price, slug, content, status, type } = req.body;
         const fileName = Date.now() + '-' + uploadedFile.originalname.toLowerCase().split(" ").map(item => item.trim()).join("");
 
         await sequelize.transaction(async (transaction) => {
@@ -32,6 +32,7 @@ export const createCourse = async (req, res) => {
                     category_id,
                     user_id,
                     name,
+                    course_price:0,
                     // number_of_lessons: 0,
                     slug,
                     content,
@@ -50,8 +51,12 @@ export const createCourse = async (req, res) => {
             return res.status(201).json(newRecord);
         })
     } catch (error) {
-        // Trả về phản hồi lỗi
-        res.status(500).json({ error: error.message });
+        console.error("Error during course creation:", error);
+        if (error instanceof AppError) {
+            res.status(error.statusCode).json({ message: error.message });
+        } else {
+            res.status(500).json({ message: "Internal Server Error", error: error.toString() });
+        }
     }
 };
 export const getAllCourse = async (req, res) => {
@@ -105,7 +110,7 @@ export const updateCourse = async (req, res) => {
             return res.status(400).json({ message: "Vui lòng upload file thumbnail!" });
         }
 
-        const { category_id, user_id, name, slug, content, status, type } = req.body;
+        const { category_id, user_id, name,course_price, slug, content, status, type } = req.body;
         const fileName = Date.now() + '-' + uploadedFile.originalname.toLowerCase().split(" ").map(item => item.trim()).join("");
 
         await sequelize.transaction(async (t) => {
@@ -116,6 +121,7 @@ export const updateCourse = async (req, res) => {
                     user_id,
                     name,
                     // number_of_lessons: 0,
+                    course_price,
                     slug,
                     content,
                     status,

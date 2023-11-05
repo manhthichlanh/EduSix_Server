@@ -8,7 +8,7 @@ import initQuizzRoute from "./quizz.route";
 import initVideoRoute from "./video.route";
 import initAdminQueryRoute from "./admin-query-router";
 export default function adminRouter(app) {
-    
+
     initCourseRoute(app)
     initSectionRoute(app)
     initLessonRoute(app)

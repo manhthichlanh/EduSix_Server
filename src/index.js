@@ -17,8 +17,7 @@ const io = new SocketIOServer(httpServer, {
 });
 //Socket IO Server
 import socketService from "./app/services/socket.service";
-
-socketService(io);
+import EventEmitter from "events";
 
 //Config .env file
 config();
@@ -31,10 +30,36 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
-initApiV1(app)
+
+global._io = io; // Đặt biến toàn cục
+// global._myEvent = new EventEmitter();
+const emitters = new Map();
+
+const initEmitter = (feed) => {
+    if (!emitters.has(feed)) {
+        emitters.set(feed, new EventEmitter());
+    }
+    return emitters.get(feed);
+}
+const finishedEmitter = (feed) => {
+    if (emitters.has(feed)) {
+        emitters.delete(feed);
+        return true;
+    } else {
+        return false;
+    }
+}
+
+global._initEmitter = initEmitter;
+global._finishedEmitter = finishedEmitter;
+
+socketService(io);
+
+initApiV1(app);
+
 
 const port = process.env.PORT || 8080;
-app.use(express.json());
+// app.use(express.json());
 
 // error handler
 // error handler
