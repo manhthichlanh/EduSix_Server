@@ -9,7 +9,7 @@ import sequelize from "../models/db";
 import path from "path";
 import fs from "fs"
 import { ReE, ReS } from '../../utils/util.service';
-
+const {Op} = require('sequelize');
 export const createLessonWithVideo = async (req, res) => {
     const { section_id, name, content, lesson_type, file_videos, youtube_id, duration, video_type, fileName } = req.body;
     try {
@@ -192,27 +192,61 @@ export async function getAllLessonQuizzVideo(req, res, next) {
     try {
         const section_id = req.params.section_id;
 
-        const LessonDoc = await LessonModel.findAll({
+        const SectionDoc = await LessonModel.findAll({
             where: { section_id: section_id },
             attributes: ['lesson_id', 'section_id', 'name', 'content', 'status', 'type', 'duration', 'ordinal_number'],
-            include: [{
-                model: VideoModel,
-                attributes: ['video_id', 'lesson_id', 'file_videos', 'youtube_id', 'duration', 'status', 'type']
-            },
-            {
-                model: QuizzModel,
-                attributes: ['id', 'question', 'process', 'status', 'lesson_id']
-            }
+            include: [
+                {
+                    model: VideoModel,
+                    attributes: ['video_id', 'lesson_id', 'file_videos', 'youtube_id', 'duration', 'status', 'type'],
+                    required: false, // Include VideoModel conditionally
+                    where: { type: { [Op.in]: [0, 1] } } // Include VideoModel when Lesson's type is 0 or 1
+                },
+                {
+                    model: QuizzModel,
+                    required: false, // Include QuizzModel conditionally
+                    where: { type: 2 } // Include QuizzModel when Lesson's type is 2
+                }
             ]
-        })
-        return ReS(
-            res,
-            {
-                LessonDoc
-            },
-            200
-        );
+        });
+
+        if (!SectionDoc) {
+            console.log("loi ne");
+        }
+
+        return ReS(res, { SectionDoc }, 200);
     } catch (error) {
         next(error);
     }
 }
+
+// export async function getAllLessonQuizzVideo(req, res, next) {
+//     try {
+//         const section_id = req.params.section_id;
+
+//         const SectionDoc = await LessonModel.findAll({
+//             where: { section_id: section_id },
+//             attributes: ['lesson_id', 'section_id', 'name', 'content', 'status', 'type', 'duration', 'ordinal_number'],
+//             include: [{
+//                 model: VideoModel,
+//                 attributes: ['video_id', 'lesson_id', 'file_videos', 'youtube_id', 'duration', 'status', 'type']
+//             },
+//             {
+//                 model: QuizzModel
+//             }
+//             ]
+//         })
+//         if(! SectionDoc) {
+//             console.log("loi ne");
+//         }
+//         return ReS(
+//             res,
+//             {
+//                 SectionDoc
+//             },
+//             200
+//         );
+//     } catch (error) {
+//         next(error);
+//     }
+// }
