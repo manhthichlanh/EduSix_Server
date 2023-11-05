@@ -1,9 +1,14 @@
 import SectionModel from "../models/section.model";
-
+import sequelize from "../models/db";
 export const createSection = async (req, res) => {
     try {
-        const newRecord = await SectionModel.create(req.body);
-        res.status(201).json(newRecord);
+        await sequelize.transaction(async (t) => {
+            const { course_id, name, status } = req.body;
+            const newRecord = await SectionModel.create({ course_id, name, status, ordinal_number: 0 }, { transaction: t });
+            await newRecord.update({ ordinal_number: newRecord.section_id }, { fields: ['ordinal_number'], transaction: t });
+            return res.status(201).json(newRecord);
+        })
+
     } catch (error) {
         res.status(400).json({ error: error.message });
     }

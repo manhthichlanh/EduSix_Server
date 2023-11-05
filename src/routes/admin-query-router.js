@@ -2,6 +2,8 @@ import { Router } from "express";
 import * as initAdminQuery from "../app/controllers/admin-query.controller";
 import { uploadVideoOnMemory } from "../app/configs/uploadVideo.config";
 import { checkRequestVideo, convertToHLS } from "../../middleware/video.middleware";
+import { createCourse, getAllCourse } from "../app/controllers/course.controller";
+import { getSectionById, createSection } from "../app/controllers/section.controller";
 const router = Router();
 
 export default function initAdminQueryRoute(app) {
@@ -12,6 +14,10 @@ export default function initAdminQueryRoute(app) {
     router.post('/createLessonQuizz',initAdminQuery.createLessonQuizz);
     router.delete('/deleteLessonQuizz/:lesson_id',initAdminQuery.deleteLessonQuizz);
     router.get('/getAllLessonQuizzVideo/:section_id',initAdminQuery.getAllSectionLessonQuizzVideo)
+    router.get('/get-all-course',getAllCourse);
+    router.post("/create-course", createCourse);
+    router.get('get-all-section/:section_id', getSectionById);
+    router.post('/createSection', createSection);
     // router.post("/updateQuizz/:id", initQuizz.updateQuizz);
     // router.delete("/deleteQuizzById/:id", initQuizz.deleteQuizzById);
     // //router client

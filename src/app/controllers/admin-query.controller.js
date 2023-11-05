@@ -3,7 +3,6 @@ import VideoModel from "../models/video.model";
 import QuizzModel from "./../models/quizz.models";
 import SectionModel from "./../models/section.model"
 import AnswerModel from "../models/answer.model";
-import { generateRandomNumberWithRandomDigits } from "../../utils/util.helper";
 import AppError from "../../utils/appError";
 import sequelize from "../models/db";
 import { Op } from "sequelize";
