@@ -12,6 +12,7 @@ import { ReE, ReS } from '../../utils/util.service';
 
 export const createLessonWithVideo = async (req, res) => {
     const { section_id, name, content, lesson_type, file_videos, youtube_id, duration, video_type, fileName } = req.body;
+    const t = await sequelize.transaction();
     try {
         const ordinal_number = generateRandomNumberWithRandomDigits(1, 3);
 
@@ -206,7 +207,7 @@ export async function getAllSectionLessonQuizzVideo(req, res, next) {
         })
         let sectionCount, lessonCount, courseDuration = 0;
         sectionCount = LessonDoc.length;
-        
+
         LessonDoc.map(item => {
 
         })
