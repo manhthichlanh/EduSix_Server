@@ -9,7 +9,7 @@ import { Op } from "sequelize";
 import path from "path";
 import fs from "fs"
 import { ReE, ReS } from '../../utils/util.service';
-
+import { generateRandomNumberWithRandomDigits } from "../../utils/util.helper";
 export const createLessonWithVideo = async (req, res) => {
     const { section_id, name, content, lesson_type, file_videos, youtube_id, duration, video_type, fileName } = req.body;
     const t = await sequelize.transaction();
@@ -115,7 +115,6 @@ export async function createLessonQuizz(req, res, next) {
                         })), { transaction: t }
                     );
                 }
-                console.log("run complete");
 
                 return {
                     question: newQuiz.question,
@@ -189,36 +188,75 @@ export async function deleteLessonQuizz(req, res, next) {
 export async function getAllSectionLessonQuizzVideo(req, res, next) {
     try {
         const course_id = req.params.course_id;
+        console.log(course_id)
+        let sectionCount = 0;
+        let LessonCount = 0;
+        let TotalTime = 0;
+        const SectionDoc = await SectionModel.findAll({
+            where: { course_id },
+            include: [
+                {
+                    model: LessonModel,
 
-        const LessonDoc = await SectionModel.findAll({
-            where: { course_id: course_id },
-            attributes: ['lesson_id', 'section_id', 'name', 'content', 'status', 'type', 'duration', 'ordinal_number'],
-            include:
-                [
-                    {
-                        model: VideoModel,
-                        attributes: ['video_id', 'lesson_id', 'file_videos', 'youtube_id', 'duration', 'status'],
-                    },
-                    {
-                        model: QuizzModel,
-                        attributes: ['id', 'question', 'status', 'lesson_id'],
-                    }
-                ]
-        })
-        let sectionCount, lessonCount, courseDuration = 0;
-        sectionCount = LessonDoc.length;
+                    include: [
+                        {
+                            model: VideoModel,
+                            attributes: ['video_id', 'lesson_id', 'file_videos', 'youtube_id', 'duration', 'status', 'type'],
+                            required: false
+                        },
+                        {
+                            model: QuizzModel,
+                            required: false
+                        }
+                    ]
+                }
+            ]
+        });
 
-        LessonDoc.map(item => {
+        if (!SectionDoc) {
+            console.log("loi ne");
+        }
+        sectionCount = SectionDoc.length;
+        SectionDoc.map(section => {
+            LessonCount += section.lessons.length;
+            section.lessons.map(lesson => {
+                TotalTime += lesson.duration;
+            });
+        });
 
-        })
-        return ReS(
-            res,
-            {
-                LessonDoc
-            },
-            200
-        );
+        return ReS(res, { Course_Info: { sectionCount, LessonCount, TotalTime }, SectionDoc }, 200);
     } catch (error) {
         next(error);
     }
 }
+
+// export async function getAllLessonQuizzVideo(req, res, next) {
+//     try {
+//         const section_id = req.params.section_id;
+
+//         const SectionDoc = await LessonModel.findAll({
+//             where: { section_id: section_id },
+//             attributes: ['lesson_id', 'section_id', 'name', 'content', 'status', 'type', 'duration', 'ordinal_number'],
+//             include: [{
+//                 model: VideoModel,
+//                 attributes: ['video_id', 'lesson_id', 'file_videos', 'youtube_id', 'duration', 'status', 'type']
+//             },
+//             {
+//                 model: QuizzModel
+//             }
+//             ]
+//         })
+//         if(! SectionDoc) {
+//             console.log("loi ne");
+//         }
+//         return ReS(
+//             res,
+//             {
+//                 SectionDoc
+//             },
+//             200
+//         );
+//     } catch (error) {
+//         next(error);
+//     }
+// }

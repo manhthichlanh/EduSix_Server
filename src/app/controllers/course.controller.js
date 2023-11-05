@@ -203,6 +203,7 @@ export const deleteCourse = async (req, res) => {
 export const getImage = async (req, res) => {
     const fileName = req.params.fileName;
     let file
+    console.log(filePath(fileName))
     try {
         file = await fs.promises.readFile(filePath(fileName));
         return res.status(200).send(file)

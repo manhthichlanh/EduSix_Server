@@ -13,7 +13,7 @@ export default function initAdminQueryRoute(app) {
     router.get('/getAllLessonQuizz/:lesson_id',initAdminQuery.getAllLessonQuizz)
     router.post('/createLessonQuizz',initAdminQuery.createLessonQuizz);
     router.delete('/deleteLessonQuizz/:lesson_id',initAdminQuery.deleteLessonQuizz);
-    router.get('/getAllLessonQuizzVideo/:section_id',initAdminQuery.getAllSectionLessonQuizzVideo)
+    router.get('/getAllLessonQuizzVideo/:course_id',initAdminQuery.getAllSectionLessonQuizzVideo)
     router.get('/get-all-course',getAllCourse);
     router.post("/create-course", createCourse);
     router.get('get-all-section/:section_id', getSectionById);
