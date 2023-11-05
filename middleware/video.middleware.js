@@ -44,7 +44,7 @@ export const checkRequestVideo = async (req, res, next) => {
 }
 export const convertToHLS = async (req, res) => {
     // console.log(_initEmitter(123))
-    const { fileName, lessonWithVideo } = req.body;
+    const { fileName, lessonWithVideo, transaction } = req.body;
     const hlsPath = `public/videos/hls/`;
     const videoPath = `public/videos/`;
     if (!fs.existsSync(videoPath)) await fs.promises.mkdir(videoPath)
@@ -54,7 +54,11 @@ export const convertToHLS = async (req, res) => {
 
     if (!socketID) return res.status(400).json({ message: "Client chưa kết nối socket-id!" })
     const inputFilePath = path.join(videoPath, fileName);
-    await fs.promises.writeFile(inputFilePath, uploadedFile?.buffer)
+    try {
+        await fs.promises.writeFile(inputFilePath, uploadedFile?.buffer)
+    } catch (error) {
+        return res.status("500").json(error.message)
+    }
     const m3u8FilePath = path.join(hlsPath, fileName + ".m3u8");
     const command = ffmpeg()
         .input(inputFilePath)
@@ -80,6 +84,7 @@ export const convertToHLS = async (req, res) => {
             await fs.promises.unlink(inputFilePath)
             console.log("ngừng")
             req.body.fileName = fileName;
+            await transaction.commit();
             return res.status(201).json(lessonWithVideo);
         })
         .on('error', async (err) => {

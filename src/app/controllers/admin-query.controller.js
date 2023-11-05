@@ -11,33 +11,39 @@ export const createLessonWithVideo = async (req, res, next) => {
     const { section_id, name, content, lesson_type, youtube_id, duration, video_type } = req.body;
     const uploadedFile = req.file;
     const fileName = !uploadedFile ? null : uploadedFile.originalname;
+    const t = await sequelize.transaction();
     try {
         const ordinal_number = generateRandomNumberWithRandomDigits(1, 3);
-        await sequelize.transaction(async (t) => {
-            // Tạo bài học mới
-            const newLesson = await LessonModel.create({
-                section_id, name, content, type: lesson_type, duration, ordinal_number
-            }, { transaction: t });
-            //Cập nhật trường thứ tự (ordinal_number = lesson_id) của lesson vừa tạo
-            await newLesson.update({ ordinal_number: newLesson.lesson_id }, { fields: ['ordinal_number'], transaction: t });
-            //Tạo video mới 
-            const newVideo = await VideoModel.create({
-                lesson_id: newLesson.lesson_id,
-                file_videos: fileName,
-                youtube_id: youtube_id,
-                duration,
-                type: video_type
-            }, { transaction: t })
 
-            if (newLesson.type == 1) {
-                req.body.lessonWithVideo = { lesson: newLesson, video: newVideo }
-                req.body.fileName = fileName;
-                next();
-            }
-            else
-                res.status(201).json({ lesson: newLesson, video: newVideo });
-        });
+        // await sequelize.transaction(async (t) => {
+        // Tạo bài học mới
+        const newLesson = await LessonModel.create({
+            section_id, name, content, type: lesson_type, duration, ordinal_number
+        }, { transaction: t });
+        //Cập nhật trường thứ tự (ordinal_number = lesson_id) của lesson vừa tạo
+        await newLesson.update({ ordinal_number: newLesson.lesson_id }, { fields: ['ordinal_number'], transaction: t });
+        //Tạo video mới 
+        const newVideo = await VideoModel.create({
+            lesson_id: newLesson.lesson_id,
+            file_videos: fileName,
+            youtube_id: youtube_id,
+            duration,
+            type: video_type
+        }, { transaction: t })
+
+        if (newLesson.type == 1) {
+            req.body.lessonWithVideo = { lesson: newLesson, video: newVideo }
+            req.body.fileName = fileName;
+            req.body.transaction = t;
+            next();
+        }
+        else {
+            res.status(201).json({ lesson: newLesson, video: newVideo });
+            t.commit();
+        }
+        // });
     } catch (error) {
+        await t.rollback();
         console.log(error)
         return res.status(error.status ? error.status : 500).json({ message: error.message })
     }
