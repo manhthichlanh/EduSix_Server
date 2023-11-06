@@ -28,13 +28,13 @@ const generatePassword = (password) => {
 }
 export const createUser = async (req, res) => {
 
-    const { fullname, avatar, nickname, email, phone, address, password, active, role } = req.body;
+    const { fullname, avatar, nickname, email, phone, password, active, role } = req.body;
 
     generatePassword(password)
         .then(
             (hashedPassword) => {
                 const user = UserModel.create(
-                    { fullname, avatar, nickname, email, phone, address, password: hashedPassword, active, role }
+                    { fullname, avatar, nickname, email, phone, password: hashedPassword, active, role }
                 )
                 return user
             }
@@ -64,13 +64,13 @@ export const loginUser = async (req, res) => {
 
     try {
         const user = await UserModel.findOne({ where: { email } });
-        
+
         if (!user) {
             return res.status(404).json({ message: "Email không tồn tại" });
         }
 
         const isPasswordValid = await bcrypt.compare(password, user.password);
-        
+
         if (!isPasswordValid) {
             return res.status(401).json({ message: "Mật khẩu không chính xác" });
         }
@@ -78,7 +78,7 @@ export const loginUser = async (req, res) => {
         // Create JWT
         const token = jwt.sign({ userId: user.user_id, email: user.email, role: user.role }, privateKey, {
             algorithm: 'RS256',
-            expiresIn: "1h",
+            expiresIn: "7d",
         });
 
         return res.status(200).json({ token, user });
@@ -87,13 +87,21 @@ export const loginUser = async (req, res) => {
         res.status(500).json({ message: "Lỗi đăng nhập" });
     }
 };
+
+
 export const authenticateJWT = (req, res, next) => {
-    const token = req.headers.authorization;
+    let token;
+    if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+        token = req.headers.authorization.split(' ')[1];
+    }
+    if (!token) {
+        return next(new AppError(401, 'fail', 'You are not logged in! Please login in to continue'), req, res, next);
+    }
 
     if (token) {
         jwt.verify(token, publicKey, (err, user) => {
             if (err) {
-                return res.sendStatus(403);
+                return res.sendStatus(401);
             }
             req.user = user;
             next();
@@ -116,7 +124,7 @@ export async function protect(req, res, next) {
 
         // 2)   
         const decode = await promisify(verify)(token, publicKey);
-  
+
         // console.log("decode", decode)
         // 3) check if the user is exist (not deleted)
         // const user = await User.findByPk(decode.id);
@@ -127,7 +135,7 @@ export async function protect(req, res, next) {
             // through: { attributes: ["title","description"] },
             // attributes: ['email'],
         });
-       
+
         if (!user) {
             return next(new AppError(401, 'fail', 'This user is no longer exist'), req, res, next);
         }
