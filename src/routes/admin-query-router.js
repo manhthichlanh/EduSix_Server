@@ -18,6 +18,7 @@ export default function initAdminQueryRoute(app) {
     router.post("/create-course", createCourse);
     router.get('get-all-section/:section_id', getSectionById);
     router.post('/createSection', createSection);
+    
     // router.post("/updateQuizz/:id", initQuizz.updateQuizz);
     // router.delete("/deleteQuizzById/:id", initQuizz.deleteQuizzById);
     // //router client

@@ -54,12 +54,14 @@ export const convertToHLS = async (req, res) => {
 
     if (!socketID) return res.status(400).json({ message: "Client chưa kết nối socket-id!" })
     const inputFilePath = path.join(videoPath, fileName);
+    console.log(inputFilePath);
     try {
         await fs.promises.writeFile(inputFilePath, uploadedFile?.buffer)
     } catch (error) {
         return res.status("500").json(error.message)
     }
     const m3u8FilePath = path.join(hlsPath, fileName + ".m3u8");
+    console.log(m3u8FilePath)
     const command = ffmpeg()
         .input(inputFilePath)
         .addOption('-f', 'hls')

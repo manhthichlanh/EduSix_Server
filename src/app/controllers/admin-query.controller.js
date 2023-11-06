@@ -10,8 +10,10 @@ import path from "path";
 import fs from "fs"
 import { ReE, ReS } from '../../utils/util.service';
 import { generateRandomNumberWithRandomDigits } from "../../utils/util.helper";
-export const createLessonWithVideo = async (req, res) => {
-    const { section_id, name, content, lesson_type, file_videos, youtube_id, duration, video_type, fileName } = req.body;
+export const createLessonWithVideo = async (req, res, next) => {
+    const { section_id, name, content, lesson_type, file_videos, youtube_id, duration, video_type } = req.body;
+    const uploadedFile = req.file;
+    const fileName = uploadedFile.originalname;
     const t = await sequelize.transaction();
     try {
         const ordinal_number = generateRandomNumberWithRandomDigits(1, 3);

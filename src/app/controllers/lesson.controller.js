@@ -30,6 +30,20 @@ export const getLessonById = async (req, res) => {
     }
 };
 
+export const getLessonBySectionId = async (req, res) => {
+    const sectionId = req.params.sectionId;
+    try {
+        const record = await LessonModel.findOne({ where: { sectionId: sectionId } });
+        if (!record) {
+            res.status(404).json({ error: 'Record not found' });
+        } else {
+            res.status(200).json(record);
+        }
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+}
+
 export const updateLesson = async (req, res) => {
     try {
         const record = await LessonModel.findByPk(req.params.id);
