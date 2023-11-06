@@ -33,13 +33,12 @@ export const createCourse = async (req, res) => {
                     category_id,
                     user_id,
                     name,
-                    number_of_lessons: 0,
+                    course_price,
                     slug,
                     content,
                     status,
                     type,
                     thumbnail: fileName,
-                    total_course_time: 0
                 },
                 { transaction }
             );
