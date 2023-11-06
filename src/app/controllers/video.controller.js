@@ -93,26 +93,26 @@ if (!existsSync(uploadDir)) {
 //     // }
 
 // };
-// export const getAllVideo = async (req, res) => {
-//     try {
-//         const records = await VideoModel.findAll();
-//         res.status(200).json(records);
-//     } catch (error) {
-//         res.status(500).json({ error: error.message });
-//     }
-// };
-// export const getVideoById = async (req, res) => {
-//     try {
-//         const record = await VideoModel.findByPk(req.params.id);
-//         if (!record) {
-//             res.status(404).json({ error: 'Record not found' });
-//         } else {
-//             res.status(200).json(record);
-//         }
-//     } catch (error) {
-//         res.status(500).json({ error: error.message });
-//     }
-// };
+export const getAllVideo = async (req, res) => {
+    try {
+        const records = await VideoModel.findAll();
+        res.status(200).json(records);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+export const getVideoById = async (req, res) => {
+    try {
+        const record = await VideoModel.findByPk(req.params.id);
+        if (!record) {
+            res.status(404).json({ error: 'Record not found' });
+        } else {
+            res.status(200).json(record);
+        }
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
 // export const updateVideo = async (req, res) => {
 
 //     const uploadedFile = req.file;
@@ -203,39 +203,39 @@ if (!existsSync(uploadDir)) {
 //     }
 
 // };
-// export const deleteVideo = async (req, res) => {
-//     const t = await sequelize.transaction();
+export const deleteVideo = async (req, res) => {
+    const t = await sequelize.transaction();
 
-//     try {
+    try {
 
-//         const record = await VideoModel.findByPk(req.params.id);
+        const record = await VideoModel.findByPk(req.params.id);
 
-//         if (!record) {
-//             await t.commit();
-//             return res.status(404).json({ message: 'Không tìm thấy dữ liệu phù hợp với yêu cầu của bạn!' });
-//         }
+        if (!record) {
+            await t.commit();
+            return res.status(404).json({ message: 'Không tìm thấy dữ liệu phù hợp với yêu cầu của bạn!' });
+        }
 
-//         await record.destroy({ transaction: t });
+        await record.destroy({ transaction: t });
 
-//         if (record.file_videos) {
-//             const videoFile = uploadDir + "/" + record.file_videos;
-//             if (existsSync(videoFile)) {
-//                 unlinkSync(videoFile);
-//                 await t.commit();
-//                 return res.status(501).json({ message: "Xóa thành công video!" })
-//             } else {
-//                 await t.rollback();
-//                 return res.status(501).json({ message: "File video không tồn tại!" })
-//             }
-//         } else {
-//             await t.commit();
-//             return res.status(200).json({ message: "Xóa thành công video!" });
-//         }
-//     } catch (error) {
-//         console.log(error);
-//         return res.status(501).json({ error })
-//     }
-// };
+        if (record.file_videos) {
+            const videoFile = uploadDir + "/" + record.file_videos;
+            if (existsSync(videoFile)) {
+                unlinkSync(videoFile);
+                await t.commit();
+                return res.status(501).json({ message: "Xóa thành công video!" })
+            } else {
+                await t.rollback();
+                return res.status(501).json({ message: "File video không tồn tại!" })
+            }
+        } else {
+            await t.commit();
+            return res.status(200).json({ message: "Xóa thành công video!" });
+        }
+    } catch (error) {
+        console.log(error);
+        return res.status(501).json({ error })
+    }
+};
 export const getVideoStream = async (req, res) => {
     const fileName = req.params.videoName;
     if (fileName.split(".").slice(0, -1) === "") {
@@ -248,18 +248,22 @@ export const getVideoStream = async (req, res) => {
     const hlsPath = "public/videos/hls/"
     const filePath = path.join(hlsPath, fileName)
     // console.log(filePath)
-    if (!fs.existsSync(filePath)) {
-        // console.log("cóa")
-        console.log('file not found: ' + fileName);
-        res.writeHead(404, { 'Content-Type': 'text/plain' });
-        res.write('file not found: %s\n', fileName);
-        res.end();
-
+    try {
+        if (!fs.existsSync(filePath)) {
+            // console.log("cóa")
+            console.log('file not found: ' + fileName);
+            res.writeHead(404, { 'Content-Type': 'text/plain' });
+            res.write('file not found: %s\n', fileName);
+            res.end();
+        }
+    } catch (error) {
+        console.log(error)
     }
+
     switch (path.extname(fileName)) {
         case ".m3u8":
             try {
-                const m3u8Data = fs.readFileSync(filePath, "utf-8");
+                const m3u8Data = await fs.promises.readFile(filePath, "utf-8");
                 res.setHeader('Content-Type', 'application/vnd.apple.mpegurl');
                 res.end(m3u8Data);
 
@@ -276,7 +280,7 @@ export const getVideoStream = async (req, res) => {
                 const start = parseInt(parts[0], 10);
                 const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
                 const chunksize = (end - start) + 1;
-                const file = fs.createReadStream(filePath, { start, end });
+                const file = await fs.promises.createReadStream(filePath, { start, end });
                 const head = {
                     'Content-Range': `bytes ${start}-${end}/${fileSize}`,
                     'Accept-Ranges': 'bytes',
