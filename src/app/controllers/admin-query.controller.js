@@ -10,6 +10,7 @@ import path from "path";
 import fs from "fs"
 import { ReE, ReS } from '../../utils/util.service';
 import { generateRandomNumberWithRandomDigits } from "../../utils/util.helper";
+import CourseModel from "../models/course.model";
 export const createLessonWithVideo = async (req, res, next) => {
     const { section_id, name, content, lesson_type, file_videos, youtube_id, duration, video_type } = req.body;
     const uploadedFile = req.file;
@@ -194,6 +195,7 @@ export async function getAllSectionLessonQuizzVideo(req, res, next) {
         let sectionCount = 0;
         let LessonCount = 0;
         let TotalTime = 0;
+        const CourseDoc = await CourseModel.findByPk(course_id);
         const SectionDoc = await SectionModel.findAll({
             where: { course_id },
             include: [
@@ -226,7 +228,7 @@ export async function getAllSectionLessonQuizzVideo(req, res, next) {
             });
         });
 
-        return ReS(res, { Course_Info: { sectionCount, LessonCount, TotalTime }, SectionDoc }, 200);
+        return ReS(res, { Course_Info: { sectionCount, LessonCount, TotalTime }, CourseDoc, SectionDoc }, 200);
     } catch (error) {
         next(error);
     }
