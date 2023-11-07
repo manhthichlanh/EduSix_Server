@@ -85,7 +85,7 @@ export async function createLessonQuizz(req, res, next) {
                 content,
                 duration,
                 status: true,
-                type,
+                type: lesson_type,
                 duration,
                 ordinal_number,
             }, { transaction: t });
@@ -108,22 +108,22 @@ export async function createLessonQuizz(req, res, next) {
                 // return newQuiz
                 console.log("run Question", newQuiz);
 
-                if (answers && answers.length > 0) {
-                    const answerRecords = await AnswerModel.bulkCreate(
-                        answers.map((answer) => ({
-                            answer: answer.answer,
-                            isCorrect: answer.isCorrect,
-                            quizz_id: newQuiz.id,
-                            explain: answer.explain,
-                        })), { transaction: t }
-                    );
-                }
+                if (answers && answers.length > 0) { }
+                const answerRecords = await AnswerModel.bulkCreate(
+                    answers.map((answer) => ({
+                        answer: answer.answer,
+                        isCorrect: answer.is_correct,
+                        quizz_id: newQuiz.id,
+                        explain: answer.explain,
+                    })), { transaction: t }
+                );
+
 
                 return {
                     question: newQuiz.question,
                     status: newQuiz.status,
                     answer_type: newQuiz.answer_type,
-                    answers: newAnswer,
+                    answers: answerRecords,
                 };
             }));
             await LessonQuizzDoc.update({ ordinal_number: LessonQuizzDoc.lesson_id, duration: durationSet }, { fields: ['ordinal_number', 'duration'], transaction: t });
@@ -222,6 +222,7 @@ export async function getAllSectionLessonQuizzVideo(req, res, next) {
         }
         sectionCount = SectionDoc.length;
         SectionDoc.map(section => {
+            section.lessons.sort((a, b) => a.ordinal_number - b.ordinal_number); // Sắp xếp các bài học theo lesson_id tăng dần
             LessonCount += section.lessons.length;
             section.lessons.map(lesson => {
                 TotalTime += lesson.duration;
