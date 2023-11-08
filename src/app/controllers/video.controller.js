@@ -3,6 +3,7 @@ import sequelize from "../models/db";
 import fs, { existsSync, readFile, unlinkSync } from "fs";
 // import ffmpeg from "fluent-ffmpeg";
 import path from "path";
+import { getAndDeleteHLSFile } from "../../utils/util.helper";
 const uploadDir = "public/videos";
 //Nếu không tìm thấy thư mục thì tạo lại
 if (!existsSync(uploadDir)) {
@@ -181,7 +182,6 @@ export const getVideoById = async (req, res) => {
 //                         return res.status(500).json({ error: 'Lỗi khi lưu tệp.' });
 //                     }
 //                 });
-
 //                 unlinkSync(oldFilePath)
 
 //                 await t.commit();
@@ -304,5 +304,115 @@ export const getVideoStream = async (req, res) => {
             break;
     }
 }
+export const getAllVideosJson = async (req, res) => {
+    const videosPath = "public/videos/"
+
+    // Sử dụng fs.readdir để đọc danh sách tên file trong thư mục
+    const videos = {}
+
+    try {
+        const videosFolderFiles = await fs.promises.readdir(videosPath)
+        const hlsFolderFiles = await fs.promises.readdir(videosPath + "hls")
+        videos.videosFolderFiles = videosFolderFiles;
+        videos.hlsFolderFiles = hlsFolderFiles;
+    } catch (error) {
+        console.error('Lỗi khi đọc thư mục:', err);
+        return res.status(500).json({ error: 'Lỗi khi đọc thư mục videos' });
+    }
+
+    return res.status(200).json({ message: "Lấy file thành công!", videos })
+}
+export const deleteVideosTempFile = async (req, res) => {
+    const files = req.body.files;
+    const isAll = req.body.isAll;
+    const type = req.params.type;
+    const videosPath = "public/videos/";
+    const hlsPath = "public/videos/hls/";
+    const fileToExclude = "hls";
+    try {
+        switch (type) {
+            case "temp":
+
+                if (isAll) {
+                    fs.readdir(videosPath, (err, files) => {
+                        if (err) {
+                            console.error('Lỗi khi đọc thư mục:', err);
+                            return;
+                        }
+
+                        files.forEach((fileName) => {
+                            if (fileName !== fileToExclude) {
+                                const filePath = path.join(videosPath, fileName);
+                                try {
+                                    // Sử dụng fs.unlinkSync để xóa tệp
+                                    fs.unlinkSync(filePath);
+                                    console.log(`Đã xóa tệp: ${fileName}`);
+                                } catch (error) {
+                                    console.error(`Lỗi khi xóa tệp ${fileName}: ${error}`);
+                                }
+                            }
+                        });
+                    });
+                } else {
+                    if (!files || files?.length == 0) {
+                        return res.status(400).json(`Không ${files ? "có" : "tìm thấy"} file để xóa!`)
+                    }
+                    console.log("cóa")
+                    files.forEach((fileName) => {
+                        if (fileName !== fileToExclude) {
+                            const filePath = path.join(videosPath, fileName);
+                            try {
+                                // Sử dụng fs.unlinkSync để xóa tệp
+                                fs.unlinkSync(filePath);
+                                console.log(`Đã xóa tệp: ${fileName}`);
+                            } catch (error) {
+                                console.error(`Lỗi khi xóa tệp ${fileName}: ${error}`);
+                            }
+                        }
+                    });
+                }
+                return res.status(200).json({ message: "Xóa temp files thành công" })
+
+            case "hls":
+                if (isAll) {
+                    fs.readdir(hlsPath, (err, files) => {
+                        if (err) {
+                            console.error('Lỗi khi đọc thư mục:', err);
+                            return;
+                        }
+                        files.forEach((fileName) => {
+                            const filePath = path.join(hlsPath, fileName);
+                            try {
+                                // Sử dụng fs.unlinkSync để xóa tệp
+                                fs.unlinkSync(filePath);
+                                console.log(`Đã xóa tệp: ${fileName}`);
+                            } catch (error) {
+                                console.error(`Lỗi khi xóa tệp ${fileName}: ${error}`);
+                            }
+
+                        });
+                    });
+                } else {
+                    files.forEach(async (fileName) => {
+                        const filePath = path.join(hlsPath, fileName);
+                        try {
+                            // Sử dụng fs.unlinkSync để xóa tệp
+                            await getAndDeleteHLSFile(filePath, hlsPath)
+                        } catch (error) {
+                            console.error(`Lỗi khi xóa tệp ${fileName}: ${error}`);
+                        }
+
+                    });
+
+                }
+                return res.status(200).json({ message: "Xóa hls files thành công" })
+            default:
+                break;
+        }
+    } catch (error) {
+        console.log(error)
+        return res.status(500).json({ message: error.message })
+    }
 
 
+}

@@ -15,7 +15,9 @@ export default function (app) {
     //     initVideo.updateVideo)
 
     router.get("/stream/:videoName", initVideo.getVideoStream)
-
+    router.get("/get-videos/json", initVideo.getAllVideosJson)
+    router.delete("/delete-file/:type", initVideo.deleteVideosTempFile)
+    
     // router.post("/",
     //     uploadVideoOnMemory.single("file_videos"),
     //     checkRequestVideo,

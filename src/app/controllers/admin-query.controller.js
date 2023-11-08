@@ -11,11 +11,11 @@ import fs from "fs"
 import { ReE, ReS } from '../../utils/util.service';
 import { generateRandomNumberWithRandomDigits } from "../../utils/util.helper";
 import CourseModel from "../models/course.model";
-import { model } from "mongoose";
 export const createLessonWithVideo = async (req, res, next) => {
     const { section_id, name, content, lesson_type, file_videos, youtube_id, duration, video_type } = req.body;
     const uploadedFile = req.file;
     const fileName = uploadedFile.originalname;
+    console.log(fileName)
     const t = await sequelize.transaction();
     try {
         const ordinal_number = generateRandomNumberWithRandomDigits(1, 3);
