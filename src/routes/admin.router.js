@@ -14,6 +14,7 @@ export default function adminRouter(app) {
     initLessonRoute(app)
     initCategoryRoute(app)
     initUserRoute(app)
+    
     // initVideoRoute(app)
     initAuthRoute(app)
     initQuizzRoute(app)

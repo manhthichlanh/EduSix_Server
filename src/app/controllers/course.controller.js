@@ -1,9 +1,12 @@
 import CourseModel from "../models/course.model";
 import SectionModel from "../models/section.model";
+import CourseEnrollMentModel from "../models/CourseEnrollment.model";
 import sequelize from "../models/db";
 import fs, { fsyncSync } from "fs";
 import path from "path";
 import AppError from "../../utils/appError";
+import { ReE, ReS } from '../../utils/util.service';
+
 //Đường dẫn chứa ảnh thumbnail 
 const uploadDir = "public/images/course-thumbnail";
 const filePath = (fileName) => path.join(uploadDir, fileName);
@@ -176,5 +179,21 @@ export const getImage = async (req, res) => {
         return res.status(200).send(file)
     } catch (error) {
         return res.status(404).json({ message: "Không tìm thấy file!" })
+    }
+}
+export async function feedBackCourse(req, res, next) {
+    try {
+        const user_id = req.user; // Giả sử req.user là user_id
+        const course_id = req.params.course_id;
+        const { rate, content } = req.body;
+
+        // Giả sử CourseEnrollMentModel là model Sequelize
+        const feedBackDoc = await CourseEnrollMentModel.create({ user_id, course_id, rate, content });
+
+        return ReS(res, { feedBackDoc }, 200);
+    } catch (error) {
+        // Thêm xử lý lỗi chi tiết để dễ dàng xác định vấn đề
+        console.error('Feed back error:', error);
+        next(error);
     }
 }

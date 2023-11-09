@@ -14,5 +14,6 @@ export default function initCourseRoute(app) {
     uploadImageOnMemory.single("thumbnail"),
     initCourse.updateCourse)
     router.get("/thumbnail/:fileName", initCourse.getImage)
+    router.post("/feedBackCourse/:course_id",initCourse.feedBackCourse);
     app.use("/course", router);
 }

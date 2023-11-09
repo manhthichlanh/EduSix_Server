@@ -7,7 +7,7 @@ import UserModel from './user.model';
 import QuizzModel from './quizz.models';
 import AnswerModel from './answer.model';
 import VideoModel from './video.model';
-
+import CourseEnrollMentModel from './CourseEnrollment.model';
 // Định nghĩa mối quan hệ giữa User và Course
 UserModel.hasMany(CourseModel, { foreignKey: 'user_id' });
 CourseModel.belongsTo(UserModel, { foreignKey: 'user_id' });
@@ -36,3 +36,6 @@ QuizzModel.belongsTo(LessonModel, { foreignKey: "lesson_id"});
 //Quan hệ giữa Quizz và Answer
 QuizzModel.hasMany(AnswerModel, { foreignKey: "quizz_id"});
 AnswerModel.belongsTo(QuizzModel, { foreignKey: "quizz_id"});
+//Relations 
+CourseEnrollMentModel.belongsTo(UserModel,{foreignKey:'user_id',as:'user'});
+CourseEnrollMentModel.belongsTo(CourseModel,{foreignKey:'course_id',as:'course'});
