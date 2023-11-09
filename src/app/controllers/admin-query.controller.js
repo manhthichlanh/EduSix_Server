@@ -30,7 +30,7 @@ export const createLessonWithVideo = async (req, res, next) => {
         //Tạo video mới 
         const newVideo = await VideoModel.create({
             lesson_id: newLesson.lesson_id,
-            file_videos: fileName+".m3u8",
+            file_videos: fileName + ".m3u8",
             youtube_id: youtube_id,
             duration,
             type: video_type
@@ -277,9 +277,49 @@ export const getAllLessonVideoQuizz = async (req, res) => {
                 ],
                 required: false
             }
-        ]
+        ],
+        order: [[`ordinal_number`, 'DESC']]
     })
     return res.status(200).json({ lessonDoc })
+}
+export const getAllLessonVideoQuizzBySectionId = async (req, res) => {
+    const { section_id  } = req.query;
+    const page = parseInt(req.query.page, 5) || 1;
+    const page_size = parseInt(req.query.page_size, 5) || 5;
+    const offset = (page - 1) * page_size;
+    const queryObject = {
+        where: { section_id },
+        include: [
+            {
+                model: VideoModel,
+                attributes: ['video_id', 'lesson_id', 'file_videos', 'youtube_id', 'duration', 'status', 'type'],
+                required: false
+            },
+            {
+                model: QuizzModel,
+                include: [
+                    {
+                        model: AnswerModel
+                    }
+                ],
+                required: false
+            }
+        ],
+        order: [[`ordinal_number`, 'DESC']],
+        limit: page_size,
+        offset: offset
+    }
+    const { count, rows } = await LessonModel.findAndCountAll(queryObject)
+    return res.status(200).json({
+        status: 'success',
+        data: {
+            totalItems: count,
+            totalPages: Math.ceil(count / page_size),
+            currentPage: page,
+            pageSize: page_size,
+            lessonDoc: rows
+        }
+    });
 }
 
 export async function getAllSectionLessonQuizzVideo(req, res, next) {
