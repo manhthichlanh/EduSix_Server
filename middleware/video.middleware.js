@@ -13,11 +13,12 @@ export const checkRequestVideo = async (req, res, next) => {
     }
 
     const record = await LessonModel.findByPk(lesson_id);
+    console.log(record)
     let duration = 0;
     if (!record) {
         switch (parseInt(lesson_type)) {
             case 0:
-                if (!youtube_id) return res.status(415).json({ message: "Vui lòng cung cấp dữ liệu youtube_id theo đúng yêu cầu của bài học", type: record.type });
+                if (!youtube_id) return res.status(415).json({ message: "Vui lòng cung cấp dữ liệu youtube_id theo đúng yêu cầu của bài học", lesson_type });
                 await fetchYoutube(youtube_id)
                     .then(res => {
                         duration = res.duration

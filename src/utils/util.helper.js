@@ -49,12 +49,18 @@ export const findVideoDuration = (buffer) => {
 
 export const getAndDeleteHLSFile = async (m3u8FilePath, segmentFilePath) => {
     const m3u8Content = await fs.promises.readFile(m3u8FilePath, 'utf8');
-    for (const line of m3u8Content.split('\n')) {
-        if (line.startsWith('#EXTINF:')) {
-            const segmentFileName = m3u8Content.split('\n')[m3u8Content.split('\n').indexOf(line) + 1];
-            await fs.promises.unlink(segmentFilePath + segmentFileName);
+    console.log(m3u8Content)
+    const m3u8LineArr = m3u8Content.split('\n');
+    m3u8LineArr.map(async (item, index) => {
+        if (item.startsWith(`#EXTINF:`)) {
+            console.log(m3u8LineArr[index + 1])
+            try {
+                await fs.promises.unlink(segmentFilePath + m3u8LineArr[index + 1]);
+            } catch (error) {
+                console.log(error)
+            }
         }
-    }
+    })
     await fs.promises.unlink(m3u8FilePath);
 }
 

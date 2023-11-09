@@ -224,8 +224,8 @@ export const deleteVideo = async (req, res) => {
                 await t.commit();
                 return res.status(501).json({ message: "Xóa thành công video!" })
             } else {
-                await t.rollback();
-                return res.status(501).json({ message: "File video không tồn tại!" })
+                await t.commit();
+                return res.status(200).json({ message: "File video không tồn tại!" })
             }
         } else {
             await t.commit();

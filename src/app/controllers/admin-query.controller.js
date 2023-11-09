@@ -9,7 +9,7 @@ import { Op } from "sequelize";
 import path from "path";
 import fs from "fs"
 import { ReE, ReS } from '../../utils/util.service';
-import { generateRandomNumberWithRandomDigits } from "../../utils/util.helper";
+import { generateRandomNumberWithRandomDigits, getAndDeleteHLSFile } from "../../utils/util.helper";
 import CourseModel from "../models/course.model";
 export const createLessonWithVideo = async (req, res, next) => {
     const { section_id, name, content, lesson_type, file_videos, youtube_id, duration, video_type } = req.body;
@@ -30,7 +30,7 @@ export const createLessonWithVideo = async (req, res, next) => {
         //Tạo video mới 
         const newVideo = await VideoModel.create({
             lesson_id: newLesson.lesson_id,
-            file_videos: fileName,
+            file_videos: fileName+".m3u8",
             youtube_id: youtube_id,
             duration,
             type: video_type
@@ -189,6 +189,99 @@ export async function deleteLessonQuizz(req, res, next) {
         next(error);
     }
 }
+export const deleteLessonQuizzVideo = async (req, res, next) => {
+    const { lesson_id } = req.params; // Get lesson_id from req.params
+    try {
+        await sequelize.transaction(async (t) => {
+            const lessonDoc = await LessonModel.findOne({
+                where: { lesson_id },
+                attributes: [`lesson_id`],
+                include: [
+                    {
+                        model: VideoModel,
+                        attributes: ['video_id', 'file_videos'],
+                        required: false
+                    },
+                    {
+                        model: QuizzModel,
+                        attributes: ['id'], // Alias 'id' as 'quizz_id'
+                        include: [
+                            {
+                                model: AnswerModel,
+                                attributes: ['id'], // Alias 'id' as 'answer_id'
+                            }
+                        ],
+                        required: false
+                    }
+                ]
+            });
+
+            if (!lessonDoc) {
+                throw new Error('Không tìm thấy bài học với ID đã cho.');
+            }
+            // Xóa tất cả video
+            if (lessonDoc.videos.length > 0) {
+                for (const video of lessonDoc.videos) {
+                    await VideoModel.destroy({
+                        where: { video_id: video.video_id }
+                    });
+                    const hlsPath = "public/videos/hls/";
+                    try {
+                        await getAndDeleteHLSFile(hlsPath + video.file_videos, hlsPath)
+
+                    } catch (error) {
+                        console.log(error)
+                    }
+                }
+            }
+            if (lessonDoc.quizzs.length > 0) {
+                // Xóa tất cả quiz và answers
+                for (const quizz of lessonDoc.quizzs) {
+                    // Xóa tất cả các câu trả lời
+                    for (const answer of quizz.answers) {
+                        await AnswerModel.destroy({
+                            where: { id: answer.id } // Assuming 'id' is the correct attribute name in AnswerModel
+                        });
+                    }
+
+                    // Xóa quiz sau khi xóa tất cả các câu trả lời
+                    await QuizzModel.destroy({
+                        where: { id: quizz.id } // Assuming 'id' is the correct attribute name in QuizzModel
+                    });
+                }
+            }
+            await LessonModel.destroy({ where: { lesson_id: lessonDoc.lesson_id } })
+
+            return res.status(200).json({ message: "Xóa thành công bài học!" })
+        })
+    } catch (error) {
+        console.log(error)
+        return res.status(500).json({ message: error.message })
+    }
+
+}
+export const getAllLessonVideoQuizz = async (req, res) => {
+    const lessonDoc = await LessonModel.findAll({
+        include: [
+            {
+                model: VideoModel,
+                attributes: ['video_id', 'lesson_id', 'file_videos', 'youtube_id', 'duration', 'status', 'type'],
+                required: false
+            },
+            {
+                model: QuizzModel,
+                include: [
+                    {
+                        model: AnswerModel
+                    }
+                ],
+                required: false
+            }
+        ]
+    })
+    return res.status(200).json({ lessonDoc })
+}
+
 export async function getAllSectionLessonQuizzVideo(req, res, next) {
     try {
         const course_id = req.params.course_id;
