@@ -13,11 +13,12 @@ export const checkRequestVideo = async (req, res, next) => {
     }
 
     const record = await LessonModel.findByPk(lesson_id);
+    console.log(record)
     let duration = 0;
     if (!record) {
         switch (parseInt(lesson_type)) {
             case 0:
-                if (!youtube_id) return res.status(415).json({ message: "Vui lòng cung cấp dữ liệu youtube_id theo đúng yêu cầu của bài học", type: record.type });
+                if (!youtube_id) return res.status(415).json({ message: "Vui lòng cung cấp dữ liệu youtube_id theo đúng yêu cầu của bài học", lesson_type });
                 await fetchYoutube(youtube_id)
                     .then(res => {
                         duration = res.duration
@@ -44,7 +45,7 @@ export const checkRequestVideo = async (req, res, next) => {
 }
 export const convertToHLS = async (req, res) => {
     // console.log(_initEmitter(123))
-    const { fileName, lessonWithVideo } = req.body;
+    const { fileName, lessonWithVideo, transaction } = req.body;
     const hlsPath = `public/videos/hls/`;
     const videoPath = `public/videos/`;
     if (!fs.existsSync(videoPath)) await fs.promises.mkdir(videoPath)
@@ -54,8 +55,14 @@ export const convertToHLS = async (req, res) => {
 
     if (!socketID) return res.status(400).json({ message: "Client chưa kết nối socket-id!" })
     const inputFilePath = path.join(videoPath, fileName);
-    await fs.promises.writeFile(inputFilePath, uploadedFile?.buffer)
+    console.log(inputFilePath);
+    try {
+        await fs.promises.writeFile(inputFilePath, uploadedFile?.buffer)
+    } catch (error) {
+        return res.status("500").json(error.message)
+    }
     const m3u8FilePath = path.join(hlsPath, fileName + ".m3u8");
+    console.log(m3u8FilePath)
     const command = ffmpeg()
         .input(inputFilePath)
         .addOption('-f', 'hls')
@@ -80,6 +87,7 @@ export const convertToHLS = async (req, res) => {
             await fs.promises.unlink(inputFilePath)
             console.log("ngừng")
             req.body.fileName = fileName;
+            await transaction.commit();
             return res.status(201).json(lessonWithVideo);
         })
         .on('error', async (err) => {

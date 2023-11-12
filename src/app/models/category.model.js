@@ -16,6 +16,10 @@ const CategoryModel = sequelize.define("category", {
         comment: "True là hiện, false là ẩn",
         allowNull: false
     },
+    logo_cate: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
     ordinal_number: {
         type: DataTypes.INTEGER,
         allowNull: false,

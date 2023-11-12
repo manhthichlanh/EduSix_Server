@@ -12,8 +12,8 @@ import CourseEnrollMentModel from './CourseEnrollment.model';
 UserModel.hasMany(CourseModel, { foreignKey: 'user_id' });
 CourseModel.belongsTo(UserModel, { foreignKey: 'user_id' });
 // Định nghĩa mối quan hệ giữa Category và Course
-CategoryModel.hasMany(CourseModel, { foreignKey: 'category_id' });
-CourseModel.hasMany(CategoryModel, { foreignKey: 'category_id' });
+CategoryModel.hasMany(CourseModel, { foreignKey: 'category_id'});
+CourseModel.hasMany(CategoryModel, { foreignKey: 'category_id'});
 
 // Định nghĩa mối quan hệ giữa Course và Section
 CourseModel.hasMany(SectionModel, { foreignKey: 'course_id' });

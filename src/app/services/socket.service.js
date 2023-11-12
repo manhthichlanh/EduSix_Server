@@ -20,14 +20,9 @@ export default (io) => {
         let command;
         console.log("Có người kết nối", socket.id);
 
-        socket.on("user_init_socket", () => {
-            console.log("Có user join video stream" + socket.id)
-            socket.join(socket.id);
-            socket.emit("server_send_sid", socket.id);
-        })
         console.log("socketSide id:" + socket.id)
         _initEmitter(socket.id).on("init_ffmpeg_command", (command) => {
-
+            console.log("cóa")
             const selectedAction = switchAction(command);
 
             const process_info = {
