@@ -2,14 +2,16 @@ import { promisify } from 'util';
 import { sign, verify } from 'jsonwebtoken';
 
 import UserModel from "../models/user.model";
+import AdminModel from '../models/admin.model';
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { readFileSync } from "fs";
 import path from "path";
 //middeware error để trace bug 
 import AppError from '../../utils/appError';
-import { errorCode } from '../../utils/util.helper';
-
+import { errorCode, generateRandomString } from '../../utils/util.helper';
+import { getGoogleUser, getGoogleUserInfo, getOauthGooleToken } from '../../utils/googleAPI';
+import { getFacebookUser, getOauthFacebookToken } from '../../utils/facebookAPI';
 const privateKey = readFileSync("SSL/private-key.txt", "utf-8");
 const publicKey = readFileSync("SSL/public-key.txt", "utf-8");
 const generatePassword = (password) => {
@@ -85,6 +87,76 @@ export const loginUser = async (req, res) => {
     }
 };
 
+export const googleAuth2 = async (req, res, next) => {
+    try {
+        const { code } = req.query
+        const data = await getOauthGooleToken(code) // Gửi authorization code để lấy Google OAuth token
+        const { id_token, access_token } = data // Lấy ID token và access token từ kết quả trả về
+        const googleUser = await getGoogleUser({ id_token, access_token }) // Gửi Google OAuth token để lấy thông tin người dùng từ Google
+        const { nicknames } = await getGoogleUserInfo(access_token, 'nicknames')
+        const nickname = nicknames[0].value;
+        // Kiểm tra email đã được xác minh từ Google
+        if (!googleUser.verified_email) {
+            return res.status(403).json({
+                message: 'Google email not verified'
+            })
+        }
+        const existUser = await UserModel.findOne({ where: { email: googleUser.email } })
+        if (!existUser) {
+            const password = generateRandomString(11);
+            const { email, name, picture, family_name, given_name, locale } = googleUser;
+
+            const fullname = locale == 'vi' ? family_name + " " + given_name : name;
+            const avatar = picture;
+            const hashedPassword = await generatePassword(password)
+
+            const user = await UserModel.create(
+                { fullname, avatar, nickname, email, phone: null, password: hashedPassword, status: true, role: 0 }
+            )
+            console.log(user)
+        } else {
+            const userJson = await existUser.toJSON();
+            const queryObject = []
+            if (!userJson.nickname && !userJson.avatar) {
+                queryObject.push({ nickname: nickname, avatar: googleUser.picture }, { fields: [`nickname`, `avatar`] })
+            } else if (!userJson.nickname) {
+                queryObject.push({ nickname: nickname }, { fields: [`nickname`] })
+
+            } else if (!userJson.avatar) {
+                queryObject.push({ avatar: googleUser.picture }, { fields: [`avatar`] })
+
+            }
+            await existUser.update(...queryObject)
+            console.log(queryObject)
+        }
+        // Tạo manual_access_token và manual_refresh_token sử dụng JWT (JSON Web Token)
+        const manual_access_token = jwt.sign(
+            { email: googleUser.email, type: 'access_token' },
+            publicKey,
+            { expiresIn: '15m' }
+        )
+        const manual_refresh_token = jwt.sign(
+            { email: googleUser.email, type: 'refresh_token' },
+            publicKey,
+            { expiresIn: '100d' }
+        )
+
+        // Redirect người dùng về trang login với access token và refresh token
+        return res.redirect(
+            `http://localhost:3000/popup/oauth?access_token=${manual_access_token}&refresh_token=${manual_refresh_token}`
+        )
+    } catch (error) {
+        next(error)
+    }
+}
+export const facebookAuth2 = async (req, res, next) => {
+    const { code } = req.query
+    const data = await getOauthFacebookToken(code) // Gửi authorization code để lấy Facebook OAuth token
+    const { access_token } = data // Lấy ID token và access token từ kết quả trả về
+    const facebookUser = await getFacebookUser(access_token) // Gửi Facebook OAuth token để lấy thông tin người dùng từ Facebook
+    console.log(facebookUser)
+
+}   
 
 export const authenticateJWT = (req, res, next) => {
     let token;

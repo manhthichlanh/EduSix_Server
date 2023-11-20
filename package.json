@@ -25,6 +25,7 @@
     "fluent-ffmpeg": "^2.1.2",
     "fluent-ffmpeg-util": "^0.2.0-alpha.1",
     "fs": "^0.0.1-security",
+    "helmet": "^7.1.0",
     "jsonwebtoken": "^9.0.2",
     "mongodb": "^5.7.0",
     "mongoose": "^7.4.3",
