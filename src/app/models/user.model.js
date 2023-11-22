@@ -8,6 +8,9 @@ const UserModel = sequelize.define("users", {
     primaryKey: true,
     autoIncrement: true,
   },
+  sub_id: {
+    type: DataTypes.STRING,
+  },
   fullname: {
     type: DataTypes.STRING,
     allowNull: false,

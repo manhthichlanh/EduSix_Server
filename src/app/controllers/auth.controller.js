@@ -62,7 +62,8 @@ export const loginUser = async (req, res) => {
     const { email, password } = req.body;
 
     try {
-        const user = await UserModel.findOne({ where: { email } });
+        const user = await UserModel.findAll({ where: { email } }); 
+        
 
         if (!user) {
             return res.status(404).json({ message: "Email không tồn tại" });
@@ -89,7 +90,7 @@ export const loginUser = async (req, res) => {
 
 export const googleAuth2 = async (req, res, next) => {
     try {
-        const { code } = req.query
+        const { code, state } = req.query
         const data = await getOauthGooleToken(code) // Gửi authorization code để lấy Google OAuth token
         const { id_token, access_token } = data // Lấy ID token và access token từ kết quả trả về
         const googleUser = await getGoogleUser({ id_token, access_token }) // Gửi Google OAuth token để lấy thông tin người dùng từ Google
@@ -101,17 +102,17 @@ export const googleAuth2 = async (req, res, next) => {
                 message: 'Google email not verified'
             })
         }
-        const existUser = await UserModel.findOne({ where: { email: googleUser.email } })
+        const existUser = await UserModel.findOne({ where: { sub_id: googleUser.id } })
         if (!existUser) {
             const password = generateRandomString(11);
-            const { email, name, picture, family_name, given_name, locale } = googleUser;
+            const { id, email, name, picture, family_name, given_name, locale } = googleUser;
 
             const fullname = locale == 'vi' ? family_name + " " + given_name : name;
             const avatar = picture;
             const hashedPassword = await generatePassword(password)
 
             const user = await UserModel.create(
-                { fullname, avatar, nickname, email, phone: null, password: hashedPassword, status: true, role: 0 }
+                { sub_id: id, fullname, avatar, nickname, email, password: hashedPassword, status: true, role: 0 }
             )
             console.log(user)
         } else {
@@ -129,34 +130,76 @@ export const googleAuth2 = async (req, res, next) => {
             await existUser.update(...queryObject)
             console.log(queryObject)
         }
+        console.log({ sub_id: googleUser.id })
         // Tạo manual_access_token và manual_refresh_token sử dụng JWT (JSON Web Token)
-        const manual_access_token = jwt.sign(
-            { email: googleUser.email, type: 'access_token' },
-            publicKey,
-            { expiresIn: '15m' }
-        )
-        const manual_refresh_token = jwt.sign(
-            { email: googleUser.email, type: 'refresh_token' },
-            publicKey,
-            { expiresIn: '100d' }
-        )
+        const manual_token = jwt.sign({ sub_id: googleUser.id }, privateKey, {
+            algorithm: 'RS256',
+            expiresIn: "7d",
+        });
 
         // Redirect người dùng về trang login với access token và refresh token
+
         return res.redirect(
-            `http://localhost:3000/popup/oauth?access_token=${manual_access_token}&refresh_token=${manual_refresh_token}`
+            `${state}?manual_token=${manual_token}`
         )
     } catch (error) {
         next(error)
     }
 }
 export const facebookAuth2 = async (req, res, next) => {
-    const { code } = req.query
-    const data = await getOauthFacebookToken(code) // Gửi authorization code để lấy Facebook OAuth token
-    const { access_token } = data // Lấy ID token và access token từ kết quả trả về
-    const facebookUser = await getFacebookUser(access_token) // Gửi Facebook OAuth token để lấy thông tin người dùng từ Facebook
-    console.log(facebookUser)
+    const { code, state } = req.query
+    try {
+        const data = await getOauthFacebookToken(code) // Gửi authorization code để lấy Facebook OAuth token
+        const { access_token } = data // Lấy ID token và access token từ kết quả trả về
+        const { id, picture, short_name, name, email } = await getFacebookUser(access_token) // Gửi Facebook OAuth token để lấy thông tin người dùng từ Facebook
+        const nickname = short_name;
+        const avatar = picture.data.url;
+        const fullname = name;
 
-}   
+        const existUser = await UserModel.findOne({ where: { sub_id: id } })
+
+        if (!existUser) {
+            const password = generateRandomString(11);
+
+            const hashedPassword = await generatePassword(password)
+
+            const user = await UserModel.create(
+                { sub_id: id, fullname, avatar, nickname, email, password: hashedPassword, status: true, role: 0 }
+            )
+            console.log(user)
+        } else {
+            const userJson = await existUser.toJSON();
+            const queryObject = []
+            if (!userJson.nickname && !userJson.avatar) {
+                queryObject.push({ nickname: nickname, avatar }, { fields: [`nickname`, `avatar`] })
+            } else if (!userJson.nickname) {
+                queryObject.push({ nickname }, { fields: [`nickname`] })
+
+            } else if (!userJson.avatar) {
+                queryObject.push({ avatar: avatar }, { fields: [`avatar`] })
+
+            }
+            await existUser.update(...queryObject)
+            console.log(queryObject)
+        }
+        console.log({ sub_id: id })
+        // Tạo manual_access_token và manual_refresh_token sử dụng JWT (JSON Web Token)
+        const manual_token = jwt.sign({ sub_id: id }, privateKey, {
+            algorithm: 'RS256',
+            expiresIn: "7d",
+        });
+
+        // Redirect người dùng về trang login với access token và refresh token
+
+        return res.redirect(
+            `${state}?manual_token=${manual_token}`
+        )
+    } catch (error) {
+
+    }
+
+
+}
 
 export const authenticateJWT = (req, res, next) => {
     let token;

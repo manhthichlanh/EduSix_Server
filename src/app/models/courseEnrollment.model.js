@@ -10,7 +10,7 @@ const CourseEnrollmentsModel = sequelize.define("course_enrollments", {
   },
   course_id: {
     type: DataTypes.INTEGER,
-  },
+  }, 
   user_id: {
     type: DataTypes.INTEGER,
   }

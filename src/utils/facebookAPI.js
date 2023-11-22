@@ -12,7 +12,6 @@ export const getOauthFacebookToken = async (code) => {
             code,
         },
     });
-    console.log(data); // { access_token, token_type, expires_in }
     return data;
 };
 export const getFacebookUser = async (access_token) => {
@@ -20,10 +19,9 @@ export const getFacebookUser = async (access_token) => {
         url: 'https://graph.facebook.com/v13.0/me',
         method: 'get',
         params: {
-            fields: ['id', 'email', 'first_name', 'last_name', 'picture'].join(','),
+            fields: ['id', 'email', 'first_name', 'last_name', 'name', 'short_name', 'picture'].join(','),
             access_token: access_token,
         },
     });
-    console.log(data); // { id, email, first_name, last_name }
     return data;
 }
