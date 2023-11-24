@@ -15,10 +15,10 @@ const AdminModel = sequelize.define("admins", {
   avatar: {
     type: DataTypes.STRING,
   },
-  email: {
+  username: {
     type: DataTypes.STRING,
     allowNull: false,
-    unique: 'email',
+    unique: true,
   },
   password: {
     type: DataTypes.STRING,

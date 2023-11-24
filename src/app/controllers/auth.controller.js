@@ -30,13 +30,13 @@ const generatePassword = (password) => {
 }
 export const createUser = async (req, res) => {
 
-    const { fullname, avatar, nickname, email, phone, password, active, role } = req.body;
+    const { fullname, avatar, nickname, email, phone, password } = req.body;
 
     generatePassword(password)
         .then(
             (hashedPassword) => {
                 const user = UserModel.create(
-                    { fullname, avatar, nickname, email, phone, password: hashedPassword, active, role }
+                    { sub_id: 'direct@email@login@', fullname, avatar, nickname, email, phone, password: hashedPassword, active, role }
                 )
                 return user
             }
@@ -62,8 +62,7 @@ export const loginUser = async (req, res) => {
     const { email, password } = req.body;
 
     try {
-        const user = await UserModel.findAll({ where: { email } }); 
-        
+        const user = await UserModel.findAll({ where: { email, } });
 
         if (!user) {
             return res.status(404).json({ message: "Email không tồn tại" });
@@ -112,7 +111,7 @@ export const googleAuth2 = async (req, res, next) => {
             const hashedPassword = await generatePassword(password)
 
             const user = await UserModel.create(
-                { sub_id: id, fullname, avatar, nickname, email, password: hashedPassword, status: true, role: 0 }
+                { sub_id: id, fullname, avatar, nickname, email, password: hashedPassword, status: true }
             )
             console.log(user)
         } else {
@@ -132,10 +131,10 @@ export const googleAuth2 = async (req, res, next) => {
         }
         console.log({ sub_id: googleUser.id })
         // Tạo manual_access_token và manual_refresh_token sử dụng JWT (JSON Web Token)
-        const manual_token = jwt.sign({ sub_id: googleUser.id }, privateKey, {
+       const manual_token = jwt.sign({ sub_id: googleUser.id }, privateKey, {
             algorithm: 'RS256',
             expiresIn: "7d",
-        });
+        }); 
 
         // Redirect người dùng về trang login với access token và refresh token
 
@@ -164,7 +163,7 @@ export const facebookAuth2 = async (req, res, next) => {
             const hashedPassword = await generatePassword(password)
 
             const user = await UserModel.create(
-                { sub_id: id, fullname, avatar, nickname, email, password: hashedPassword, status: true, role: 0 }
+                { sub_id: id, fullname, avatar, nickname, email, password: hashedPassword, status: true }
             )
             console.log(user)
         } else {
@@ -195,12 +194,12 @@ export const facebookAuth2 = async (req, res, next) => {
             `${state}?manual_token=${manual_token}`
         )
     } catch (error) {
-
+        console.error(error);
+        return res.status(500).json({ message: error.message });
     }
 
 
 }
-
 export const authenticateJWT = (req, res, next) => {
     let token;
     if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
@@ -222,6 +221,8 @@ export const authenticateJWT = (req, res, next) => {
         res.sendStatus(401);
     }
 };
+
+
 
 export async function protect(req, res, next) {
     try {

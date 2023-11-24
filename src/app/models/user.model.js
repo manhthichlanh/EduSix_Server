@@ -35,11 +35,6 @@ const UserModel = sequelize.define("users", {
     allowNull: false,
     defaultValue: true,
   },
-  role: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-    defaultValue: 0, 
-  },
 }, {
   createdAt: "created_at",
   updatedAt: "updated_at"
