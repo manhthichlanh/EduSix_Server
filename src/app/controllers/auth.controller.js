@@ -94,7 +94,7 @@ export const googleAuth2 = async (req, res, next) => {
         const { id_token, access_token } = data // Lấy ID token và access token từ kết quả trả về
         const googleUser = await getGoogleUser({ id_token, access_token }) // Gửi Google OAuth token để lấy thông tin người dùng từ Google
         const { nicknames } = await getGoogleUserInfo(access_token, 'nicknames')
-        const nickname = nicknames[0].value;
+        const nickname = nicknames ? nicknames[0].value : null;
         // Kiểm tra email đã được xác minh từ Google
         if (!googleUser.verified_email) {
             return res.status(403).json({
@@ -131,10 +131,10 @@ export const googleAuth2 = async (req, res, next) => {
         }
         console.log({ sub_id: googleUser.id })
         // Tạo manual_access_token và manual_refresh_token sử dụng JWT (JSON Web Token)
-       const manual_token = jwt.sign({ sub_id: googleUser.id }, privateKey, {
+        const manual_token = jwt.sign({ sub_id: googleUser.id }, privateKey, {
             algorithm: 'RS256',
             expiresIn: "7d",
-        }); 
+        });
 
         // Redirect người dùng về trang login với access token và refresh token
 
@@ -221,6 +221,26 @@ export const authenticateJWT = (req, res, next) => {
         res.sendStatus(401);
     }
 };
+export const verifyUserToken = (req, res, next) => {
+    let token;
+    if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+        token = req.headers.authorization.split(' ')[1];
+    }
+    if (!token) {
+        return next(new AppError(401, 'fail', 'You are not logged in! Please login in to continue'), req, res, next);
+    }
+
+    if (token) {
+        jwt.verify(token, publicKey, (err, user) => {
+            if (err) {
+                return res.sendStatus(401);
+            }
+            console.log(user)
+        });
+    } else {
+        res.sendStatus(401);
+    }
+}
 
 
 
