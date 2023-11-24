@@ -10,7 +10,7 @@ export const getAllUser = async (req, res) => {
     } catch (error) {
         console.log(error);
         res.sendStatus(501)
-}
+    }
 }
 
 export const getCourseById = async (req, res) => {
@@ -29,14 +29,14 @@ export const getCourseById = async (req, res) => {
 export const updateUser = async (req, res) => {
     const userId = req.params.id;
 
-    const { fullname, avatar, nickname, email, phone, address, password, active, role } = req.body;
+    const { fullname, avatar, nickname, email, phone, password, active, role } = req.body;
 
     generatePassword(password)
         .then(
             (hashedPassword) => {
                 const result = UserModel.update(
                     {
-                        fullname, avatar, nickname, email, phone, address, password: hashedPassword, active, role, update_at: Date.now()
+                        fullname, avatar, nickname, email, phone, password: hashedPassword, active, role, update_at: Date.now()
                     },
                     {
                         where: {
@@ -75,7 +75,7 @@ export const updateUser = async (req, res) => {
         })
 }
 
-export const deleteCourse = async (req, res) => {
+export const deleteUser = async (req, res) => {
     try {
         const record = await UserModel.findByPk(req.params.id);
         if (!record) {

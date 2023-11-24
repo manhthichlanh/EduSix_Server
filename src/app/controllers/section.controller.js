@@ -1,4 +1,5 @@
 import SectionModel from "../models/section.model";
+import CourseModel from "../models/course.model";
 import sequelize from "../models/db";
 export const createSection = async (req, res) => {
     try {
@@ -19,6 +20,47 @@ export const getAllSection = async (req, res) => {
         res.status(200).json(records);
     } catch (error) {
         res.status(500).json({ error: error.message });
+    }
+};
+export const getAllSectionWithCourse = async (req, res) => {
+    try {
+        const records = await SectionModel.findAll({
+            include: [
+                CourseModel
+            ]
+        });
+
+        res.status(200).json(records);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+}
+
+export const SectionPage = async (req, res, next) => {
+    try {
+        const page = parseInt(req.query.page, 5) || 1;
+        const page_size = parseInt(req.query.page_size, 5) || 5;
+
+        const offset = (page - 1) * page_size;
+        
+        const { count, rows } = await SectionModel.findAndCountAll({
+            
+            limit: page_size,
+            offset: offset
+        });
+
+        res.status(200).json({
+            status: 'success',
+            data: {
+                totalItems: count,
+                totalPages: Math.ceil(count / page_size),
+                currentPage: page,
+                pageSize: page_size,
+                courses: rows
+            }
+        });
+    } catch (error) {
+        next(error);
     }
 };
 export const getSectionById = async (req, res) => {

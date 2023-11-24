@@ -13,11 +13,12 @@ export const checkRequestVideo = async (req, res, next) => {
     }
 
     const record = await LessonModel.findByPk(lesson_id);
+    console.log(record)
     let duration = 0;
     if (!record) {
         switch (parseInt(lesson_type)) {
             case 0:
-                if (!youtube_id) return res.status(415).json({ message: "Vui lòng cung cấp dữ liệu youtube_id theo đúng yêu cầu của bài học", type: record.type });
+                if (!youtube_id) return res.status(415).json({ message: "Vui lòng cung cấp dữ liệu youtube_id theo đúng yêu cầu của bài học", lesson_type });
                 await fetchYoutube(youtube_id)
                     .then(res => {
                         duration = res.duration
@@ -54,12 +55,14 @@ export const convertToHLS = async (req, res) => {
 
     if (!socketID) return res.status(400).json({ message: "Client chưa kết nối socket-id!" })
     const inputFilePath = path.join(videoPath, fileName);
+    console.log(inputFilePath);
     try {
         await fs.promises.writeFile(inputFilePath, uploadedFile?.buffer)
     } catch (error) {
         return res.status("500").json(error.message)
     }
     const m3u8FilePath = path.join(hlsPath, fileName + ".m3u8");
+    console.log(m3u8FilePath)
     const command = ffmpeg()
         .input(inputFilePath)
         .addOption('-f', 'hls')

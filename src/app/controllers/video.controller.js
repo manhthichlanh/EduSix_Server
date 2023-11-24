@@ -3,6 +3,7 @@ import sequelize from "../models/db";
 import fs, { existsSync, readFile, unlinkSync } from "fs";
 // import ffmpeg from "fluent-ffmpeg";
 import path from "path";
+import { getAndDeleteHLSFile } from "../../utils/util.helper";
 const uploadDir = "public/videos";
 //Nếu không tìm thấy thư mục thì tạo lại
 if (!existsSync(uploadDir)) {
@@ -93,26 +94,26 @@ if (!existsSync(uploadDir)) {
 //     // }
 
 // };
-// export const getAllVideo = async (req, res) => {
-//     try {
-//         const records = await VideoModel.findAll();
-//         res.status(200).json(records);
-//     } catch (error) {
-//         res.status(500).json({ error: error.message });
-//     }
-// };
-// export const getVideoById = async (req, res) => {
-//     try {
-//         const record = await VideoModel.findByPk(req.params.id);
-//         if (!record) {
-//             res.status(404).json({ error: 'Record not found' });
-//         } else {
-//             res.status(200).json(record);
-//         }
-//     } catch (error) {
-//         res.status(500).json({ error: error.message });
-//     }
-// };
+export const getAllVideo = async (req, res) => {
+    try {
+        const records = await VideoModel.findAll();
+        res.status(200).json(records);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+export const getVideoById = async (req, res) => {
+    try {
+        const record = await VideoModel.findByPk(req.params.id);
+        if (!record) {
+            res.status(404).json({ error: 'Record not found' });
+        } else {
+            res.status(200).json(record);
+        }
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
 // export const updateVideo = async (req, res) => {
 
 //     const uploadedFile = req.file;
@@ -181,7 +182,6 @@ if (!existsSync(uploadDir)) {
 //                         return res.status(500).json({ error: 'Lỗi khi lưu tệp.' });
 //                     }
 //                 });
-
 //                 unlinkSync(oldFilePath)
 
 //                 await t.commit();
@@ -203,39 +203,39 @@ if (!existsSync(uploadDir)) {
 //     }
 
 // };
-// export const deleteVideo = async (req, res) => {
-//     const t = await sequelize.transaction();
+export const deleteVideo = async (req, res) => {
+    const t = await sequelize.transaction();
 
-//     try {
+    try {
 
-//         const record = await VideoModel.findByPk(req.params.id);
+        const record = await VideoModel.findByPk(req.params.id);
 
-//         if (!record) {
-//             await t.commit();
-//             return res.status(404).json({ message: 'Không tìm thấy dữ liệu phù hợp với yêu cầu của bạn!' });
-//         }
+        if (!record) {
+            await t.commit();
+            return res.status(404).json({ message: 'Không tìm thấy dữ liệu phù hợp với yêu cầu của bạn!' });
+        }
 
-//         await record.destroy({ transaction: t });
+        await record.destroy({ transaction: t });
 
-//         if (record.file_videos) {
-//             const videoFile = uploadDir + "/" + record.file_videos;
-//             if (existsSync(videoFile)) {
-//                 unlinkSync(videoFile);
-//                 await t.commit();
-//                 return res.status(501).json({ message: "Xóa thành công video!" })
-//             } else {
-//                 await t.rollback();
-//                 return res.status(501).json({ message: "File video không tồn tại!" })
-//             }
-//         } else {
-//             await t.commit();
-//             return res.status(200).json({ message: "Xóa thành công video!" });
-//         }
-//     } catch (error) {
-//         console.log(error);
-//         return res.status(501).json({ error })
-//     }
-// };
+        if (record.file_videos) {
+            const videoFile = uploadDir + "/" + record.file_videos;
+            if (existsSync(videoFile)) {
+                unlinkSync(videoFile);
+                await t.commit();
+                return res.status(501).json({ message: "Xóa thành công video!" })
+            } else {
+                await t.commit();
+                return res.status(200).json({ message: "File video không tồn tại!" })
+            }
+        } else {
+            await t.commit();
+            return res.status(200).json({ message: "Xóa thành công video!" });
+        }
+    } catch (error) {
+        console.log(error);
+        return res.status(501).json({ error })
+    }
+};
 export const getVideoStream = async (req, res) => {
     const fileName = req.params.videoName;
     if (fileName.split(".").slice(0, -1) === "") {
@@ -248,18 +248,22 @@ export const getVideoStream = async (req, res) => {
     const hlsPath = "public/videos/hls/"
     const filePath = path.join(hlsPath, fileName)
     // console.log(filePath)
-    if (!fs.existsSync(filePath)) {
-        // console.log("cóa")
-        console.log('file not found: ' + fileName);
-        res.writeHead(404, { 'Content-Type': 'text/plain' });
-        res.write('file not found: %s\n', fileName);
-        res.end();
-
+    try {
+        if (!fs.existsSync(filePath)) {
+            // console.log("cóa")
+            console.log('file not found: ' + fileName);
+            res.writeHead(404, { 'Content-Type': 'text/plain' });
+            res.write('file not found: %s\n', fileName);
+            res.end();
+        }
+    } catch (error) {
+        console.log(error)
     }
+
     switch (path.extname(fileName)) {
         case ".m3u8":
             try {
-                const m3u8Data = fs.readFileSync(filePath, "utf-8");
+                const m3u8Data = await fs.promises.readFile(filePath, "utf-8");
                 res.setHeader('Content-Type', 'application/vnd.apple.mpegurl');
                 res.end(m3u8Data);
 
@@ -276,7 +280,7 @@ export const getVideoStream = async (req, res) => {
                 const start = parseInt(parts[0], 10);
                 const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
                 const chunksize = (end - start) + 1;
-                const file = fs.createReadStream(filePath, { start, end });
+                const file = await fs.promises.createReadStream(filePath, { start, end });
                 const head = {
                     'Content-Range': `bytes ${start}-${end}/${fileSize}`,
                     'Accept-Ranges': 'bytes',
@@ -300,5 +304,115 @@ export const getVideoStream = async (req, res) => {
             break;
     }
 }
+export const getAllVideosJson = async (req, res) => {
+    const videosPath = "public/videos/"
+
+    // Sử dụng fs.readdir để đọc danh sách tên file trong thư mục
+    const videos = {}
+
+    try {
+        const videosFolderFiles = await fs.promises.readdir(videosPath)
+        const hlsFolderFiles = await fs.promises.readdir(videosPath + "hls")
+        videos.videosFolderFiles = videosFolderFiles;
+        videos.hlsFolderFiles = hlsFolderFiles;
+    } catch (error) {
+        console.error('Lỗi khi đọc thư mục:', err);
+        return res.status(500).json({ error: 'Lỗi khi đọc thư mục videos' });
+    }
+
+    return res.status(200).json({ message: "Lấy file thành công!", videos })
+}
+export const deleteVideosTempFile = async (req, res) => {
+    const files = req.body.files;
+    const isAll = req.body.isAll;
+    const type = req.params.type;
+    const videosPath = "public/videos/";
+    const hlsPath = "public/videos/hls/";
+    const fileToExclude = "hls";
+    try {
+        switch (type) {
+            case "temp":
+
+                if (isAll) {
+                    fs.readdir(videosPath, (err, files) => {
+                        if (err) {
+                            console.error('Lỗi khi đọc thư mục:', err);
+                            return;
+                        }
+
+                        files.forEach((fileName) => {
+                            if (fileName !== fileToExclude) {
+                                const filePath = path.join(videosPath, fileName);
+                                try {
+                                    // Sử dụng fs.unlinkSync để xóa tệp
+                                    fs.unlinkSync(filePath);
+                                    console.log(`Đã xóa tệp: ${fileName}`);
+                                } catch (error) {
+                                    console.error(`Lỗi khi xóa tệp ${fileName}: ${error}`);
+                                }
+                            }
+                        });
+                    });
+                } else {
+                    if (!files || files?.length == 0) {
+                        return res.status(400).json(`Không ${files ? "có" : "tìm thấy"} file để xóa!`)
+                    }
+                    console.log("cóa")
+                    files.forEach((fileName) => {
+                        if (fileName !== fileToExclude) {
+                            const filePath = path.join(videosPath, fileName);
+                            try {
+                                // Sử dụng fs.unlinkSync để xóa tệp
+                                fs.unlinkSync(filePath);
+                                console.log(`Đã xóa tệp: ${fileName}`);
+                            } catch (error) {
+                                console.error(`Lỗi khi xóa tệp ${fileName}: ${error}`);
+                            }
+                        }
+                    });
+                }
+                return res.status(200).json({ message: "Xóa temp files thành công" })
+
+            case "hls":
+                if (isAll) {
+                    fs.readdir(hlsPath, (err, files) => {
+                        if (err) {
+                            console.error('Lỗi khi đọc thư mục:', err);
+                            return;
+                        }
+                        files.forEach((fileName) => {
+                            const filePath = path.join(hlsPath, fileName);
+                            try {
+                                // Sử dụng fs.unlinkSync để xóa tệp
+                                fs.unlinkSync(filePath);
+                                console.log(`Đã xóa tệp: ${fileName}`);
+                            } catch (error) {
+                                console.error(`Lỗi khi xóa tệp ${fileName}: ${error}`);
+                            }
+
+                        });
+                    });
+                } else {
+                    files.forEach(async (fileName) => {
+                        const filePath = path.join(hlsPath, fileName);
+                        try {
+                            // Sử dụng fs.unlinkSync để xóa tệp
+                            await getAndDeleteHLSFile(filePath, hlsPath)
+                        } catch (error) {
+                            console.error(`Lỗi khi xóa tệp ${fileName}: ${error}`);
+                        }
+
+                    });
+
+                }
+                return res.status(200).json({ message: "Xóa hls files thành công" })
+            default:
+                break;
+        }
+    } catch (error) {
+        console.log(error)
+        return res.status(500).json({ message: error.message })
+    }
 
 
+}

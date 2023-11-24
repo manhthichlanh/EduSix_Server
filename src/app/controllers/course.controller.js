@@ -1,5 +1,6 @@
 import CourseModel from "../models/course.model";
 import SectionModel from "../models/section.model";
+import CategoryModel from "../models/category.model";
 import sequelize from "../models/db";
 import fs, { fsyncSync } from "fs";
 import path from "path";
@@ -32,13 +33,12 @@ export const createCourse = async (req, res) => {
                     category_id,
                     user_id,
                     name,
-                    number_of_lessons: 0,
+                    course_price,
                     slug,
                     content,
                     status,
                     type,
                     thumbnail: fileName,
-                    total_course_time: 0
                 },
                 { transaction }
             );
@@ -60,10 +60,44 @@ export const createCourse = async (req, res) => {
 };
 export const getAllCourse = async (req, res) => {
     try {
-        const records = await CourseModel.findAll();
-        res.status(200).json(records);
+        const courseRecord = await CourseModel.findAll();
+
+        const newCourses = await Promise.all(
+            courseRecord.map(async (item) => {
+                const categoryRecord = await CategoryModel.findByPk(item.category_id); // Sử dụng category_id từ CourseModel
+                const courseWithCategory = { ...item.toJSON(), cate_name: categoryRecord ? categoryRecord.cate_name : null };
+                return courseWithCategory;
+            })
+        );
+        res.status(200).json(newCourses);
     } catch (error) {
         res.status(500).json({ error: error.message });
+    }
+};
+export const coursePage = async (req, res, next) => {
+    try {
+        const page = parseInt(req.query.page, 5) || 1;
+        const page_size = parseInt(req.query.page_size, 5) || 5;
+
+        const offset = (page - 1) * page_size;
+
+        const { count, rows } = await CourseModel.findAndCountAll({
+            limit: page_size,
+            offset: offset
+        });
+
+        res.status(200).json({
+            status: 'success',
+            data: {
+                totalItems: count,
+                totalPages: Math.ceil(count / page_size),
+                currentPage: page,
+                pageSize: page_size,
+                courses: rows
+            }
+        });
+    } catch (error) {
+        next(error);
     }
 };
 export const getCourseById = async (req, res) => {
@@ -177,6 +211,7 @@ export const deleteCourse = async (req, res) => {
 export const getImage = async (req, res) => {
     const fileName = req.params.fileName;
     let file
+    console.log(filePath(fileName))
     try {
         file = await fs.promises.readFile(filePath(fileName));
         return res.status(200).send(file)

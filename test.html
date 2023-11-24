@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Document</title>
+    </head>
+    <body>
+        <h1>Hello</h1>
+    </body>
+    <script>
+        //  const getOauthGoogleUrl = () => {
+        //     const { VITE_GOOGLE_CLIENT_ID, VITE_GOOGLE_AUTHORIZED_REDIRECT_URI } =
+        //     import.meta.env
+        //     const rootUrl = 'https://accounts.google.com/o/oauth2/v2/auth'
+        //     const options = {
+        //     redirect_uri: VITE_GOOGLE_AUTHORIZED_REDIRECT_URI,
+        //     client_id: VITE_GOOGLE_CLIENT_ID,
+        //     access_type: 'offline',
+        //     response_type: 'code',
+        //     prompt: 'consent',
+        //     scope: [
+        //         'https://www.googleapis.com/auth/userinfo.profile',
+        //         'https://www.googleapis.com/auth/userinfo.email',
+        //     ].join(' ')
+        //     }
+        //     const qs = new URLSearchParams(options)
+        //     return `${rootUrl}?${qs.toString()}`
+        // }
+        console.log(window.opener)
+        // const url = getOauthGoogleUrl();
+        // const params = window.location.search;
+        // if (params=="") {
+        //     window.location.href = url;
+        // } else {
+        //     console.log(params)
+        //     console.log(window.parent.location.reload())
+        // }
+    </script>
+</html>

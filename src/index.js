@@ -2,6 +2,7 @@ import express from "express";
 import { config } from "dotenv"
 import sequelize from "./app/models/db";
 import cors from "cors";
+import helmet from "helmet";
 import bodyParser from "body-parser";
 import './app/models/associations'
 import initApiV1 from "./routes/api_v1.route";
@@ -22,7 +23,7 @@ config();
 
 // Enable CORS for all routes
 app.use(cors());
-
+// app.use(helmet());
 //body parser 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.urlencoded({ extended: true }));

@@ -4,6 +4,7 @@ import { uploadImageOnMemory } from "../app/configs/uploadImages.config";
 import * as initCourse from "../app/controllers/course.controller"
 export default function initCourseRoute(app) {
     router.get("/", initCourse.getAllCourse)
+    router.get("/page", initCourse.coursePage)
     router.get("/:id", initCourse.getCourseById)
     router.get("/:id/section/count", initCourse.getSectionCountByCourseId);
     router.post("/", 

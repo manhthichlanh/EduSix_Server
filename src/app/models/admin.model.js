@@ -1,15 +1,12 @@
 import sequelize from "./db.js";
 import { DataTypes } from 'sequelize';
 // import { sequelize, DataTypes }from 'sequelize';
-const UserModel = sequelize.define("users", {
+const AdminModel = sequelize.define("admins", {
   // Định nghĩa các trường trong bảng Users
-  user_id: {
+  admin_id: {
     type: DataTypes.INTEGER,
     primaryKey: true,
     autoIncrement: true,
-  },
-  sub_id: {
-    type: DataTypes.STRING,
   },
   fullname: {
     type: DataTypes.STRING,
@@ -18,12 +15,10 @@ const UserModel = sequelize.define("users", {
   avatar: {
     type: DataTypes.STRING,
   },
-  nickname: {
+  username: {
     type: DataTypes.STRING,
-  },
-  email: {
-    type: DataTypes.STRING,
-    unique: 'email',
+    allowNull: false,
+    unique: true,
   },
   password: {
     type: DataTypes.STRING,
@@ -35,14 +30,19 @@ const UserModel = sequelize.define("users", {
     allowNull: false,
     defaultValue: true,
   },
+  role: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    defaultValue: 0, 
+  },
 }, {
   createdAt: "created_at",
   updatedAt: "updated_at"
 });
 
-UserModel.sync().then(() => {
-  console.log('User table created successfully!');
+AdminModel.sync().then(() => {
+  console.log('Admin table created successfully!');
 }).catch((error) => {
   console.error('Unable to create table : ', error);
 });
-export default UserModel;
+export default AdminModel;
