@@ -6,6 +6,7 @@ export default function initUserRoute(app) {
     router.post("/login", initAuth.loginUser);
     router.post("/", initAuth.createUser)
     router.post("/verify/user", initAuth.verifyUserToken)
+    router.post("/verify/admin", initAuth.verifyAdminToken)
     router.get("/oauth/google", initAuth.googleAuth2)
     router.get("/oauth/facebook", initAuth.facebookAuth2)
     router.post('/protected', initAuth.authenticateJWT, (req, res) => {
