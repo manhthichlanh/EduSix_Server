@@ -231,17 +231,46 @@ export const verifyUserToken = (req, res, next) => {
     }
 
     if (token) {
-        jwt.verify(token, publicKey, (err, user) => {
+        jwt.verify(token, publicKey, async (err, user) => {
             if (err) {
                 return res.sendStatus(401);
             }
-            console.log(user)
+            const { sub_id } = user;
+            const userData = await UserModel.findOne({ where: { sub_id } })
+            const userDataJson = await userData.toJSON();
+            delete userDataJson.password;
+            delete userDataJson.updated_at;
+            return res.status(200).json({ user: userDataJson });
         });
     } else {
         res.sendStatus(401);
     }
 }
 
+export const verifyAdminToken = (req, res, next) => {
+    let token;
+    if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+        token = req.headers.authorization.split(' ')[1];
+    }
+    if (!token) {
+        return next(new AppError(401, 'fail', 'You are not logged in! Please login in to continue'), req, res, next);
+    }
+
+    if (token) {
+        jwt.verify(token, publicKey, async (err, user) => {
+            if (err) {
+                return res.sendStatus(401);
+            }
+            const { id, username } = user;
+            const adminData = await UserModel.findOne({ where: { admin_id: id, username } })
+            const adminDataJson = await adminData.toJSON();
+
+            return res.status(200).json({ profile: adminDataJson });
+        });
+    } else {
+        res.sendStatus(401);
+    }
+}
 
 
 export async function protect(req, res, next) {
