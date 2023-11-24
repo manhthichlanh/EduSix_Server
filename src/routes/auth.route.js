@@ -5,6 +5,7 @@ import * as initAuth from "../app/controllers/auth.controller"
 export default function initUserRoute(app) {
     router.post("/login", initAuth.loginUser);
     router.post("/", initAuth.createUser)
+    router.post("/verify/user", initAuth.verifyUserToken)
     router.get("/oauth/google", initAuth.googleAuth2)
     router.get("/oauth/facebook", initAuth.facebookAuth2)
     router.post('/protected', initAuth.authenticateJWT, (req, res) => {
