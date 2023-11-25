@@ -1,5 +1,6 @@
 import { promisify } from 'util';
 import { sign, verify } from 'jsonwebtoken';
+const { Op } = require("sequelize");
 
 import UserModel from "../models/user.model";
 import AdminModel from '../models/admin.model';
@@ -9,7 +10,7 @@ import { readFileSync } from "fs";
 import path from "path";
 //middeware error để trace bug 
 import AppError from '../../utils/appError';
-import { errorCode, generateRandomString } from '../../utils/util.helper';
+import { errorCode, generateRandomNumberWithRandomDigits, generateRandomString } from '../../utils/util.helper';
 import { getGoogleUser, getGoogleUserInfo, getOauthGooleToken } from '../../utils/googleAPI';
 import { getFacebookUser, getOauthFacebookToken } from '../../utils/facebookAPI';
 const privateKey = readFileSync("SSL/private-key.txt", "utf-8");
@@ -30,13 +31,15 @@ const generatePassword = (password) => {
 }
 export const createUser = async (req, res) => {
 
-    const { fullname, avatar, nickname, email, phone, password } = req.body;
-
+    const { fullname, avatar, nickname, email, password } = req.body;
+    let newNickname;
+    if (!nickname) newNickname =  fullname.split(" ").slice(-1)[0]
+    const randomWord = generateRandomString(16);
     generatePassword(password)
         .then(
             (hashedPassword) => {
                 const user = UserModel.create(
-                    { sub_id: 'direct@email@login@', fullname, avatar, nickname, email, phone, password: hashedPassword, active, role }
+                    { sub_id: 'direct@email@login@' + randomWord, fullname, avatar, nickname: newNickname, email, password: hashedPassword, status: true }
                 )
                 return user
             }
@@ -62,7 +65,7 @@ export const loginUser = async (req, res) => {
     const { email, password } = req.body;
 
     try {
-        const user = await UserModel.findAll({ where: { email, } });
+        const user = await UserModel.findOne({ where: { email, } });
 
         if (!user) {
             return res.status(404).json({ message: "Email không tồn tại" });
@@ -86,7 +89,61 @@ export const loginUser = async (req, res) => {
         res.status(500).json({ message: "Lỗi đăng nhập" });
     }
 };
+export const loginAdmin = async (req, res) => {
+    const { username, password } = req.body;
+    try {
+        const admin = await AdminModel.findOne({ where: { username } });
+        if (!admin) {
+            return res.status(404).json({ message: "Username không tồn tại" });
+        }
 
+        const isPasswordValid = await bcrypt.compare(password, admin.password);
+
+        if (!isPasswordValid) {
+            return res.status(401).json({ message: "Mật khẩu không chính xác" });
+        }
+        if (admin.status == 0) return res.status(403).json({ message: "Tài khoản không khả dụng" })
+        // Create JWT
+        const token = jwt.sign({ adminId: admin.admin_id, username: admin.username, avatar: admin.avatar, role: admin.role }, privateKey, {
+            algorithm: 'RS256',
+            expiresIn: "7d",
+        });
+
+        return res.status(200).json({ token, admin });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Lỗi đăng nhập" });
+    }
+};
+export const createAdmin = async (req, res) => {
+
+    const { fullname, avatar, username, password, status, role } = req.body;
+
+    generatePassword(password)
+        .then(
+            (hashedPassword) => {
+                const admin = AdminModel.create(
+                    { fullname, avatar, username, password: hashedPassword, status, role }
+                )
+                return admin
+            }
+        )
+
+        .then(
+            (admin) => {
+                res.status(201).json({
+                    status: "success",
+                    admin,
+                });
+            }
+        )
+        .catch(
+            (err) => {
+                res.sendStatus(501);
+                console.log(err);
+            }
+        )
+}
 export const googleAuth2 = async (req, res, next) => {
     try {
         const { code, state } = req.query
@@ -257,12 +314,12 @@ export const verifyAdminToken = (req, res, next) => {
     }
 
     if (token) {
-        jwt.verify(token, publicKey, async (err, user) => {
+        jwt.verify(token, publicKey, async (err, admin) => {
             if (err) {
                 return res.sendStatus(401);
             }
-            const { id, username } = user;
-            const adminData = await UserModel.findOne({ where: { admin_id: id, username } })
+            const { adminId, username } = admin;
+            const adminData = await AdminModel.findOne({ where: { admin_id: adminId, username } })
             const adminDataJson = await adminData.toJSON();
 
             return res.status(200).json({ profile: adminDataJson });

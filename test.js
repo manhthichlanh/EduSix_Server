@@ -33,33 +33,41 @@
 //     })
 const crypto = require('crypto');
 
-function generateRandomString(length) {
-    // Tạo buffer để lưu trữ dãy byte ngẫu nhiên
-    const randomBytes = crypto.randomBytes(length);
+// function generateRandomString(length) {
+//     // Tạo buffer để lưu trữ dãy byte ngẫu nhiên
+//     const randomBytes = crypto.randomBytes(length);
 
-    // Chuyển đổi dãy byte thành chuỗi hex
-    const randomString = randomBytes.toString('hex');
+//     // Chuyển đổi dãy byte thành chuỗi hex
+//     const randomString = randomBytes.toString('hex');
 
-    return randomString;
+//     return randomString;
+// }
+
+// // Độ dài chuỗi ngẫu nhiên mong muốn (đơn vị: byte)
+// const lengthOfRandomString = 10;
+
+// // Tạo ra chuỗi ngẫu nhiên
+// const randomString = generateRandomString(lengthOfRandomString);
+// console.log(randomString.length)
+// // In ra chuỗi ngẫu nhiên
+// const arr = [1, 2, 3];
+// const testFuction = (...arr) => {
+//     //   arr.map(item=>console.log(item))
+//     console.log(arr)
+// }
+// testFuction(1, 2, 3)
+// const obj = { f: 213, s: 321 };
+// const queryArr = [{}, {fields: []}]
+// for (const [key, value] of Object.entries(obj)) {
+//     queryArr[0][`${key}`] = value;
+//     queryArr[1]['fields'].push(`${key}`)
+// }
+// console.log(queryArr)
+const generateRandomNumberInRange = (minN, maxN) => {
+    const range = maxN - minN + 1;
+
+    const randomBytes = crypto.randomBytes(4); // 4 bytes for 32 bits
+    const randomValue = (parseInt(randomBytes.toString('hex'), 16) % range) + minN;
+
+    return randomValue;
 }
-
-// Độ dài chuỗi ngẫu nhiên mong muốn (đơn vị: byte)
-const lengthOfRandomString = 10;
-
-// Tạo ra chuỗi ngẫu nhiên
-const randomString = generateRandomString(lengthOfRandomString);
-console.log(randomString.length)
-// In ra chuỗi ngẫu nhiên
-const arr = [1, 2, 3];
-const testFuction = (...arr) => {
-    //   arr.map(item=>console.log(item))
-    console.log(arr)
-}
-testFuction(1, 2, 3)
-const obj = { f: 213, s: 321 };
-const queryArr = [{}, {fields: []}]
-for (const [key, value] of Object.entries(obj)) {
-    queryArr[0][`${key}`] = value;
-    queryArr[1]['fields'].push(`${key}`)
-}
-console.log(queryArr)

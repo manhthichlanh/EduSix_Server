@@ -23,7 +23,6 @@ const UserModel = sequelize.define("users", {
   },
   email: {
     type: DataTypes.STRING,
-    unique: 'email',
   },
   password: {
     type: DataTypes.STRING,
