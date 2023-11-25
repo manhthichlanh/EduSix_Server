@@ -1,7 +1,6 @@
 import { promisify } from 'util';
 import { sign, verify } from 'jsonwebtoken';
-const { Op } = require("sequelize");
-
+import sequelize from '../models/db';
 import UserModel from "../models/user.model";
 import AdminModel from '../models/admin.model';
 import bcrypt from "bcrypt";
@@ -33,7 +32,7 @@ export const createUser = async (req, res) => {
 
     const { fullname, avatar, nickname, email, password } = req.body;
     let newNickname;
-    if (!nickname) newNickname =  fullname.split(" ").slice(-1)[0]
+    if (!nickname) newNickname = fullname.split(" ").slice(-1)[0]
     const randomWord = generateRandomString(16);
     generatePassword(password)
         .then(
@@ -65,10 +64,16 @@ export const loginUser = async (req, res) => {
     const { email, password } = req.body;
 
     try {
-        const user = await UserModel.findOne({ where: { email, } });
+        const user = await UserModel.findOne({
+            where:
+            {
+                email,
+                // sub_id: { [sequelize.Op.like]: "%direct@email@login@" }
+            }
+        });
 
         if (!user) {
-            return res.status(404).json({ message: "Email không tồn tại" });
+            return res.status(404).json({ message: "User không tồn tại" });
         }
 
         const isPasswordValid = await bcrypt.compare(password, user.password);
