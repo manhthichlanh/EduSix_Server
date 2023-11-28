@@ -20,7 +20,7 @@ const CourseEnrollmentsModel = sequelize.define("course_enrollments", {
 });
 
 CourseEnrollmentsModel.sync().then(() => {
-  console.log('User table created successfully!');
+  console.log('Course Enrollment table created successfully!');
 }).catch((error) => {
   console.error('Unable to create table : ', error);
 });
