@@ -103,3 +103,12 @@ const generateRandomNumberInRange = (minN, maxN) => {
 
     return randomValue;
 }
+export const generateRandomString = (length) => {
+    // Tạo buffer để lưu trữ dãy byte ngẫu nhiên
+    const randomBytes = crypto.randomBytes(length);
+
+    // Chuyển đổi dãy byte thành chuỗi hex
+    const randomString = randomBytes.toString('hex');
+
+    return randomString;
+}

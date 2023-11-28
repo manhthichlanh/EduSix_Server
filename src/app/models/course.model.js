@@ -13,7 +13,7 @@ const CourseModel = sequelize.define("course", {
     category_id: {
         type: DataTypes.INTEGER,
     },
-    user_id: {
+    admin_id: {
         type: DataTypes.INTEGER,
     },
     name: {
