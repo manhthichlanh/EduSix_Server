@@ -5,7 +5,7 @@ import SectionModel from "./../models/section.model"
 import AnswerModel from "../models/answer.model";
 import AppError from "../../utils/appError";
 import sequelize from "../models/db";
-import { Op } from "sequelize";
+import { Op, where, literal } from "sequelize";
 import path from "path";
 import fs from "fs"
 import { ReE, ReS } from '../../utils/util.service';
@@ -15,6 +15,7 @@ import CourseEnrollmentsModel from "../models/courseEnrollment.model";
 import CourseProgressModel from "../models/courseProgress.model";
 import SectionProgressModel from "../models/sectionProgress.model";
 import LessonProgressModel from "../models/lessonProgress.model";
+import { model } from "mongoose";
 export const createLessonWithVideo = async (req, res, next) => {
     const { section_id, name, content, lesson_type, file_videos, youtube_id, duration, video_type } = req.body;
     const uploadedFile = req.file;
@@ -438,7 +439,43 @@ export const updateProgress = async (req, res) => {
     try {
         await sequelize.transaction(async (t) => {
             const enrollment_doc = await CourseEnrollmentsModel.findOne({ where: { course_id, user_id } });
-            const { enrollment_id } = enrollment_doc.toJSON();
+            const { enrollment_id } = enrollment_doc;
+            console.log(enrollment_id)
+            const s_doc = await CourseProgressModel.findOne({
+                where: { enrollment_id },
+                include: [
+                    {
+                        model: SectionProgressModel,
+                        where: { section_id },
+                        include: [
+                            {
+                                model: LessonProgressModel,
+                                where: { lesson_id }
+                            }
+                        ]
+                    }
+
+                ]
+            });
+            if (!s_doc) return res.status(400).json({ message: "Không tìm thấy dữ liệu tương ứng!" })
+            const { course_progress_id, section_progresses } = s_doc;
+            const { lesson_progresses, section_progress_id } = section_progresses[0];
+            const { lesson_progress_id } = lesson_progresses[0];
+            await LessonProgressModel.update({ current: 1 }, { where: { lesson_progress_id } }, { transaction: t })
+            await SectionProgressModel.increment('current', { by: 1, where: { section_progress_id } });
+            const newSectionProgress_doc = await SectionProgressModel.findAll({ where: { course_progress_id } })
+            const course_progress_value = newSectionProgress_doc?.reduce((prevValue, currentValue, curentIndex, arr) => {
+                console.log(arr.length)
+                const { current, total } = currentValue
+                if (total == 0) return prevValue;
+                else
+                    return prevValue + ((current / total) / arr.length)
+            }, 0
+            )
+            await CourseProgressModel.update({ progress: course_progress_value }, { where: { enrollment_id } });
+            // await SectionProgressModel.increment
+            console.log({ course_progress_id, section_progresses, lesson_progress_id })
+            return res.json(s_doc)
             // const progress_doc = 
             // const courseProgress_doc = await CourseProgressModel.findOne({ where: { enrollment_id, course_id } });
             // const { course_progress_id } = courseProgress_doc.toJSON();
@@ -462,6 +499,9 @@ export const updateProgress = async (req, res) => {
         console.log(error)
         return res.status(500).json({ message: error.message });
     }
+}
+export const getAllProgressById = (req, res) => {
+
 }
 
 // export async function getAllLessonQuizzVideo(req, res, next) {
