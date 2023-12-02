@@ -19,6 +19,5 @@ export default function initUserRoute(app) {
     router.get("/popup", (req, res) => {
         res.sendFile(join(process.cwd(), "test.html"))
     })
-
     app.use("/auth/", router);
 }
