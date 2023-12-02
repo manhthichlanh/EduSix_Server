@@ -6,6 +6,7 @@ import AdminModel from '../models/admin.model';
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { readFileSync } from "fs";
+
 import path from "path";
 //middeware error để trace bug 
 import AppError from '../../utils/appError';
@@ -14,6 +15,9 @@ import { getGoogleUser, getGoogleUserInfo, getOauthGooleToken } from '../../util
 import { getFacebookUser, getOauthFacebookToken } from '../../utils/facebookAPI';
 const privateKey = readFileSync("SSL/private-key.txt", "utf-8");
 const publicKey = readFileSync("SSL/public-key.txt", "utf-8");
+// Example using Express.js
+
+  
 const generatePassword = (password) => {
     return new Promise((resolve, reject) => {
         const saltRounds = 10; // Số lượng vòng lặp băm (tăng độ an toàn)
@@ -61,6 +65,7 @@ export const createUser = async (req, res) => {
         )
 }
 export const loginUser = async (req, res) => {
+    
     const { email, password } = req.body;
 
     try {
@@ -368,4 +373,5 @@ export async function protect(req, res, next) {
     } catch (err) {
         next(err);
     }
+    
 }

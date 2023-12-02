@@ -9,5 +9,6 @@ export default function initUserRoute(app) {
     router.get("/:id", initUser.getCourseById)
     router.delete("/:id", initUser.deleteUser)
     router.put("/:id", initUser.updateUser)
+    
     app.use("/user", router);
 }
