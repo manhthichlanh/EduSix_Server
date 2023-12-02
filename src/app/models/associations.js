@@ -1,5 +1,8 @@
 import CourseModel from './course.model';
 import CourseEnrollmentsModel from './courseEnrollment.model';
+import CourseProgressModel from './courseProgress.model';
+import SectionProgressModel from './sectionProgress.model';
+import LessonProgressModel from './lessonProgress.model';
 import SectionModel from './section.model';
 import LessonModel from './lesson.model';
 import CategoryModel from './category.model';
@@ -18,6 +21,19 @@ CourseModel.belongsTo(AdminModel, { foreignKey: 'admin_id' });
 
 UserModel.hasMany(CourseEnrollmentsModel, { foreignKey: 'user_id' });
 CourseEnrollmentsModel.belongsTo(UserModel, { foreignKey: 'user_id' });
+
+
+CourseEnrollmentsModel.hasMany(CourseProgressModel, { foreignKey: 'enrollment_id' });
+CourseProgressModel.belongsTo(CourseEnrollmentsModel, { foreignKey: 'enrollment_id' });
+
+CourseEnrollmentsModel.hasMany(CourseProgressModel, { foreignKey: 'enrollment_id' });
+CourseProgressModel.belongsTo(CourseEnrollmentsModel, { foreignKey: 'enrollment_id' });
+
+CourseProgressModel.hasMany(SectionProgressModel, { foreignKey: 'course_progress_id' });
+SectionProgressModel.belongsTo(CourseProgressModel, { foreignKey: 'course_progress_id' });
+
+SectionProgressModel.hasMany(LessonProgressModel, { foreignKey: 'section_progress_id' });
+LessonProgressModel.belongsTo(SectionProgressModel, { foreignKey: 'section_progress_id' });
 
 CourseModel.hasMany(CourseEnrollmentsModel, { foreignKey: 'course_id' });
 CourseEnrollmentsModel.belongsTo(CourseModel, { foreignKey: 'course_id' });
