@@ -5,9 +5,6 @@ import SectionModel from "./../models/section.model"
 import AnswerModel from "../models/answer.model";
 import AppError from "../../utils/appError";
 import sequelize from "../models/db";
-import { Op, where, literal } from "sequelize";
-import path from "path";
-import fs from "fs"
 import { ReE, ReS } from '../../utils/util.service';
 import { generateRandomNumberWithRandomDigits, getAndDeleteHLSFile } from "../../utils/util.helper";
 import CourseModel from "../models/course.model";
@@ -15,7 +12,6 @@ import CourseEnrollmentsModel from "../models/courseEnrollment.model";
 import CourseProgressModel from "../models/courseProgress.model";
 import SectionProgressModel from "../models/sectionProgress.model";
 import LessonProgressModel from "../models/lessonProgress.model";
-import { model } from "mongoose";
 export const createLessonWithVideo = async (req, res, next) => {
     const { section_id, name, content, lesson_type, file_videos, youtube_id, duration, video_type } = req.body;
     const uploadedFile = req.file;
