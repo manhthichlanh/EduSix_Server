@@ -1,6 +1,6 @@
 import { promisify } from 'util';
 import { sign, verify } from 'jsonwebtoken';
-import sequelize from '../models/db';
+import {Op} from 'sequelize';
 import UserModel from "../models/user.model";
 import AdminModel from '../models/admin.model';
 import bcrypt from "bcrypt";
@@ -68,10 +68,9 @@ export const loginUser = async (req, res) => {
             where:
             {
                 email,
-                // sub_id: { [sequelize.Op.like]: "%direct@email@login@" }
+                sub_id: { [Op.like]: `%direct@email@login@%` }
             }
         });
-
         if (!user) {
             return res.status(404).json({ message: "User không tồn tại" });
         }
@@ -83,12 +82,12 @@ export const loginUser = async (req, res) => {
         }
 
         // Create JWT
-        const token = jwt.sign({ userId: user.user_id, email: user.email, role: user.role }, privateKey, {
+        const token = jwt.sign({ sub_id: user.sub_id }, privateKey, {
             algorithm: 'RS256',
             expiresIn: "7d",
         });
 
-        return res.status(200).json({ token, user });
+        return res.status(200).json({ token });
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: "Lỗi đăng nhập" });
@@ -299,6 +298,7 @@ export const verifyUserToken = (req, res, next) => {
             }
             const { sub_id } = user;
             const userData = await UserModel.findOne({ where: { sub_id } })
+            if (!userData) return res.status(400).json({message: "Không tìm thầy user"})
             const userDataJson = await userData.toJSON();
             delete userDataJson.password;
             delete userDataJson.updated_at;
@@ -333,7 +333,6 @@ export const verifyAdminToken = (req, res, next) => {
         res.sendStatus(401);
     }
 }
-
 
 export async function protect(req, res, next) {
     try {
