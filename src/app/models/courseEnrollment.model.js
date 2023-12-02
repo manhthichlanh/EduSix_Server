@@ -10,7 +10,7 @@ const CourseEnrollmentsModel = sequelize.define("course_enrollments", {
   },
   course_id: {
     type: DataTypes.INTEGER,
-  }, 
+  },
   user_id: {
     type: DataTypes.INTEGER,
   }
@@ -20,7 +20,7 @@ const CourseEnrollmentsModel = sequelize.define("course_enrollments", {
 });
 
 CourseEnrollmentsModel.sync().then(() => {
-  console.log('Course Enrollment table created successfully!');
+  console.log('User table created successfully!');
 }).catch((error) => {
   console.error('Unable to create table : ', error);
 });
