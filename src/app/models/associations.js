@@ -11,7 +11,7 @@ import AdminModel from './admin.model';
 import QuizzModel from './quizz.models';
 import AnswerModel from './answer.model';
 import VideoModel from './video.model';
-
+import BlogModel from './blog.model';
 // Định nghĩa mối quan hệ giữa User và Course
 AdminModel.hasMany(CourseModel, { foreignKey: 'admin_id' });
 CourseModel.belongsTo(AdminModel, { foreignKey: 'admin_id' });
@@ -45,21 +45,31 @@ CourseModel.hasMany(CategoryModel, { foreignKey: 'category_id'});
 // Định nghĩa mối quan hệ giữa Course và Section
 CourseModel.hasMany(SectionModel, { foreignKey: 'course_id' });
 SectionModel.belongsTo(CourseModel, { foreignKey: 'course_id' });
+
 // Định nghĩa mối quan hệ giữa Section và Lesson
 SectionModel.hasMany(LessonModel, { foreignKey: 'section_id' });
 LessonModel.belongsTo(SectionModel, { foreignKey: 'section_id' });
+
 //Đình nghĩa mối quan hệ Lesson và videos
 LessonModel.hasMany(QuizzModel, { foreignKey: "lesson_id" });
 QuizzModel.belongsTo(LessonModel, { foreignKey: "lesson_id" });
+
 //Đình nghĩa mối quan hệ Lesson và quizzs
 LessonModel.hasMany(VideoModel, { foreignKey: "lesson_id" });
 VideoModel.belongsTo(LessonModel, { foreignKey: "lesson_id" });
+
 //QUan he quizz và answer 
 QuizzModel.hasMany(AnswerModel, { foreignKey: "quizz_id",as:"relaQuizz"});
 AnswerModel.belongsTo(QuizzModel, { foreignKey: "quizz_id",as:"relaAnswer"});
+
 //Quan hệ giữa Quizz và Lesson
 LessonModel.hasMany(QuizzModel, { foreignKey: "lesson_id"});
 QuizzModel.belongsTo(LessonModel, { foreignKey: "lesson_id"});
+
 //Quan hệ giữa Quizz và Answer
 QuizzModel.hasMany(AnswerModel, { foreignKey: "quizz_id"});
 AnswerModel.belongsTo(QuizzModel, { foreignKey: "quizz_id"});
+
+//Quan he giữa Blog và Category
+CategoryModel.hasMany(BlogModel,{foreignKey:'category_id'});
+BlogModel.belongsTo(CategoryModel,{foreignKey:'category_id'});
