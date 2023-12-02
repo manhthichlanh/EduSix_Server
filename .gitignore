@@ -7,3 +7,7 @@ package.json
 public/videos/*
 public/images/*
 *.env
+package-lock.json
+server.js
+test.html
+test.js

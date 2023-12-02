@@ -11,6 +11,10 @@ import fs from "fs"
 import { ReE, ReS } from '../../utils/util.service';
 import { generateRandomNumberWithRandomDigits, getAndDeleteHLSFile } from "../../utils/util.helper";
 import CourseModel from "../models/course.model";
+import CourseEnrollmentsModel from "../models/courseEnrollment.model";
+import CourseProgressModel from "../models/courseProgress.model";
+import SectionProgressModel from "../models/sectionProgress.model";
+import LessonProgressModel from "../models/lessonProgress.model";
 export const createLessonWithVideo = async (req, res, next) => {
     const { section_id, name, content, lesson_type, file_videos, youtube_id, duration, video_type } = req.body;
     const uploadedFile = req.file;
@@ -373,8 +377,91 @@ export async function getAllSectionLessonQuizzVideo(req, res, next) {
         next(error);
     }
 }
-export const userEnrollCourse = async(req, res, next) => {
+export const userEnrollCourse = async (req, res) => {
+    const { user_id, course_id } = req.body;
+    try {
+        await sequelize.transaction(async (t) => {
+            const existUserEnrollmentCourse = await CourseEnrollmentsModel.findOne({ where: { user_id, course_id } }, { transFaction: t });
+            if (existUserEnrollmentCourse) throw new AppError(400, "fail", "Người dùng đã đăng ký khóa học này")
+            // const { enrollment_id } = await newCourseEnrollment.toJSON();
+            const [createCourseEnrollmentResult, findSectionsResult] = await Promise.all([
+                CourseEnrollmentsModel.create({ user_id, course_id }, { transaction: t }),
+                // CourseProgressModel.create({ course_id, enrollment_id, progress: 0, is_finish: false }, { transaction: t }),
+                SectionModel.findAll({ where: { course_id } })
+            ])
+            const enrollment_Json = createCourseEnrollmentResult.toJSON();
+            const sectionsJSON = findSectionsResult.map(section => section.toJSON());
+            // const { enrollment_id } = await createCourseEnrollmentResult.toJSON();
+            // const section_doc = await findSectionsResult.toJSON();
+            const createCourseProgress = await CourseProgressModel.create({ course_id, enrollment_id: enrollment_Json.enrollment_id, progress: 0, is_finish: false }, { transaction: t });
+            // const lessonDoc = await LessonModel.findAll({ where: { section_id: sectionsJSON.section_id } }, { transaction: t })
+            const { course_progress_id } = createCourseProgress.toJSON();
+            const SectionProgressArr = sectionsJSON.map(item => ({ course_progress_id, section_id: item.section_id, current: 0, total: sectionsJSON.length, is_finish: false }));
+            const SectionProgressSave = await SectionProgressModel.bulkCreate(SectionProgressArr, { transaction: t });
+            const SectionProgressSaveIDArr = await Promise.all(
+                SectionProgressSave.map(async item => {
+                    const lessonSelected = await LessonModel.findAll({ where: { section_id: item.section_id } }, { transaction: t });
+                    const lessonSelectedArr = lessonSelected.map(lesson => ({
+                        lesson_id: lesson.lesson_id,
+                        section_progress_id: item.section_progress_id,
+                        current: 0,
+                        total: 1,
+                        is_finish: false
+                    }));
+                    return lessonSelectedArr;
+                })
+            );
 
+            // Làm phẳng mảng SectionProgressSaveIDArr
+            const flattenedResult = SectionProgressSaveIDArr.flat();
+
+            const LessonProgressSave = await LessonProgressModel.bulkCreate(flattenedResult, { transaction: t })
+            await Promise.all(
+                SectionProgressSave.map(async section => {
+                    let countLesson = 0;
+                    LessonProgressSave.map(lesson => {
+                        if (section.section_progress_id == lesson.section_progress_id) countLesson++;
+                    })
+                    section.total = countLesson;
+                    await section.save({ transaction: t })
+                })
+            )
+
+            return res.status(200).json({ message: "Đăng ký khóa học thành công", user_id: user_id, course_id: course_id })
+        })
+    } catch (error) {
+        return res.status(error.statusCode ? error.statusCode : 500).json(error.message)
+    }
+}
+export const updateProgress = async (req, res) => {
+    const { course_id, user_id, section_id, lesson_id } = req.body;
+    try {
+        await sequelize.transaction(async (t) => {
+            const enrollment_doc = await CourseEnrollmentsModel.findOne({ where: { course_id, user_id } });
+            const { enrollment_id } = enrollment_doc.toJSON();
+            // const progress_doc = 
+            // const courseProgress_doc = await CourseProgressModel.findOne({ where: { enrollment_id, course_id } });
+            // const { course_progress_id } = courseProgress_doc.toJSON();
+
+            // // courseProgress_doc.progress = 
+            // const sectionProgress_doc = await SectionProgressModel.findOne({ where: { course_progress_id, section_id } });
+            // const { section_progress_id } = sectionProgress_doc.toJSON();
+            // const lessonProgress_doc = await LessonProgressModel.findOne({ where: { section_progress_id, lesson_id } });
+            // lessonProgress_doc.current = 1;
+            // lessonProgress_doc.is_finish = true;
+            // lessonProgress_doc.save({ transaction: t });
+            // const lessonProgress_doc_find = await LessonProgressModel.findAll({ where: { section_progress_id } });
+            // let countCurrentPoint = 0;
+            // lessonProgress_doc_find.map(item => { if (item.is_finish == 1 || item.is_finish) { countCurrentPoint++; console.log(item) } });
+            // sectionProgress_doc.current = countCurrentPoint;
+            // sectionProgress_doc.save({ transaction: t });
+
+            return res.status(200).json({ message: "Cập nhật tiến độ cho bài học thành công!" });
+        })
+    } catch (error) {
+        console.log(error)
+        return res.status(500).json({ message: error.message });
+    }
 }
 
 // export async function getAllLessonQuizzVideo(req, res, next) {

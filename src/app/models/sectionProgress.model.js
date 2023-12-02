@@ -1,14 +1,16 @@
+// import SectionModel from "./section.model.js";
 import sequelize from "./db.js";
 import { DataTypes } from 'sequelize';
 // import { sequelize, DataTypes }from 'sequelize';
-const SectionProgressModel = sequelize.define("course_enrollments", {
-    // Định nghĩa các trường trong bảng Users
-    section_process_id: {
+const SectionProgressModel = sequelize.define("section_progress", {
+    // Định nghĩa các trường trong bảng Lesson
+    section_progress_id: {
         type: DataTypes.INTEGER,
+        allowNull: false,
         primaryKey: true,
-        autoIncrement: true,
+        autoIncrement: true, // Đặt để tự động tăng
     },
-    course_proccess_id: {
+    course_progress_id: {
         type: DataTypes.INTEGER,
     },
     section_id: {
@@ -21,13 +23,17 @@ const SectionProgressModel = sequelize.define("course_enrollments", {
         type: DataTypes.INTEGER,
     },
     is_finish: {
-        type: DataTypes.BOOLEAN
+        type: DataTypes.BOOLEAN,
     }
-});
+}, {
+    createdAt: "created_at",
+    updatedAt: "updated_at",
 
+});
 SectionProgressModel.sync().then(() => {
-    console.log('Course Progress table created successfully!');
+    console.log('Lesson_progress table created successfully!');
 }).catch((error) => {
     console.error('Unable to create table : ', error);
 });
+
 export default SectionProgressModel;
