@@ -6,7 +6,7 @@
         <title>Document</title>
     </head>
     <body>
-        <h1>Hello</h1>
+        <h1 class="myevent">Hello</h1>
     </body>
     <script>
         //  const getOauthGoogleUrl = () => {
@@ -27,7 +27,21 @@
         //     const qs = new URLSearchParams(options)
         //     return `${rootUrl}?${qs.toString()}`
         // }
-        console.log(window.opener)
+
+        const myEvent = document.querySelector(".myevent");
+        const clickPromist = new Promise((resolve, reject) => {
+            myEvent.addEventListener("lick", (e) => {
+                resolve(console.log("eee"));
+
+        })
+        })  
+        clickPromist.then(() => {
+          console.log("After click")
+        }
+        ).finally(() => {
+          console.log("Cuối cung thì")
+        }
+        ).catch(err=>console.log(err))
         // const url = getOauthGoogleUrl();
         // const params = window.location.search;
         // if (params=="") {

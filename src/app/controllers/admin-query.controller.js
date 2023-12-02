@@ -283,7 +283,7 @@ export const getAllLessonVideoQuizz = async (req, res) => {
     return res.status(200).json({ lessonDoc })
 }
 export const getAllLessonVideoQuizzBySectionId = async (req, res) => {
-    const { section_id  } = req.query;
+    const { section_id } = req.query;
     const page = parseInt(req.query.page, 5) || 1;
     const page_size = parseInt(req.query.page_size, 5) || 5;
     const offset = (page - 1) * page_size;
@@ -372,6 +372,9 @@ export async function getAllSectionLessonQuizzVideo(req, res, next) {
     } catch (error) {
         next(error);
     }
+}
+export const userEnrollCourse = async(req, res, next) => {
+
 }
 
 // export async function getAllLessonQuizzVideo(req, res, next) {
