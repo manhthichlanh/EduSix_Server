@@ -12,6 +12,7 @@ import CourseEnrollmentsModel from "../models/courseEnrollment.model";
 import CourseProgressModel from "../models/courseProgress.model";
 import SectionProgressModel from "../models/sectionProgress.model";
 import LessonProgressModel from "../models/lessonProgress.model";
+import { model } from "mongoose";
 export const createLessonWithVideo = async (req, res, next) => {
     const { section_id, name, content, lesson_type, file_videos, youtube_id, duration, video_type } = req.body;
     const uploadedFile = req.file;
@@ -433,7 +434,7 @@ export const userEnrollCourse = async (req, res) => {
 export const updateProgress = async (req, res) => {
     const { course_id, user_id, section_id, lesson_id } = req.body;
     try {
-        await sequelize.transaction(async (t) => {
+        const { course_progress_id, enrollment_id } = await sequelize.transaction(async (t) => {
             const enrollment_doc = await CourseEnrollmentsModel.findOne({ where: { course_id, user_id } });
             const { enrollment_id } = enrollment_doc;
             console.log(enrollment_id)
@@ -456,12 +457,24 @@ export const updateProgress = async (req, res) => {
             if (!s_doc) return res.status(400).json({ message: "Không tìm thấy dữ liệu tương ứng!" })
             const { course_progress_id, section_progresses } = s_doc;
             const { lesson_progresses, section_progress_id } = section_progresses[0];
-            const { lesson_progress_id } = lesson_progresses[0];
-            await LessonProgressModel.update({ current: 1 }, { where: { lesson_progress_id } }, { transaction: t })
-            await SectionProgressModel.increment('current', { by: 1, where: { section_progress_id } });
-            const newSectionProgress_doc = await SectionProgressModel.findAll({ where: { course_progress_id } })
+            const { lesson_progress_id, current, total } = lesson_progresses[0];
+            if (current < total) await LessonProgressModel.update({ current: 1, is_finish: true }, { where: { lesson_progress_id } }, { transaction: t });
+            const section_progress_one = await SectionProgressModel.findOne({ where: { section_progress_id } });
+            if (section_progress_one.current < section_progress_one.total) {
+                section_progress_one.current = section_progress_one.current + 1;
+                const section_progress_one_save = await section_progress_one.save({ transaction: t });
+                const { current, total } = section_progress_one_save;
+                if (current == total && total != 0) {
+                    section_progress_one_save.is_finish = true;
+                    section_progress_one_save.save()
+                }
+            }
+            return { course_progress_id, enrollment_id };
+        })
+        await sequelize.transaction(async (t) => {
+            const newSectionProgress_doc = await SectionProgressModel.findAll({ where: { course_progress_id } });
             const course_progress_value = newSectionProgress_doc?.reduce((prevValue, currentValue, curentIndex, arr) => {
-                console.log(arr.length)
+                console.log(currentValue)
                 const { current, total } = currentValue
                 if (total == 0) return prevValue;
                 else
@@ -470,34 +483,61 @@ export const updateProgress = async (req, res) => {
             )
             await CourseProgressModel.update({ progress: course_progress_value }, { where: { enrollment_id } });
             // await SectionProgressModel.increment
-            console.log({ course_progress_id, section_progresses, lesson_progress_id })
-            return res.json(s_doc)
-            // const progress_doc = 
-            // const courseProgress_doc = await CourseProgressModel.findOne({ where: { enrollment_id, course_id } });
-            // const { course_progress_id } = courseProgress_doc.toJSON();
-
-            // // courseProgress_doc.progress = 
-            // const sectionProgress_doc = await SectionProgressModel.findOne({ where: { course_progress_id, section_id } });
-            // const { section_progress_id } = sectionProgress_doc.toJSON();
-            // const lessonProgress_doc = await LessonProgressModel.findOne({ where: { section_progress_id, lesson_id } });
-            // lessonProgress_doc.current = 1;
-            // lessonProgress_doc.is_finish = true;
-            // lessonProgress_doc.save({ transaction: t });
-            // const lessonProgress_doc_find = await LessonProgressModel.findAll({ where: { section_progress_id } });
-            // let countCurrentPoint = 0;
-            // lessonProgress_doc_find.map(item => { if (item.is_finish == 1 || item.is_finish) { countCurrentPoint++; console.log(item) } });
-            // sectionProgress_doc.current = countCurrentPoint;
-            // sectionProgress_doc.save({ transaction: t });
-
             return res.status(200).json({ message: "Cập nhật tiến độ cho bài học thành công!" });
         })
+
     } catch (error) {
         console.log(error)
         return res.status(500).json({ message: error.message });
     }
 }
-export const getAllProgressById = (req, res) => {
+export const getAllProgressById = async (req, res) => {
+    const { course_id, user_id } = req.body;
+    try {
+        const enrollment_doc = await CourseEnrollmentsModel.findOne({ where: { course_id, user_id } });
+        const { enrollment_id } = enrollment_doc;
+        const s_doc = await CourseProgressModel.findAll({
+            where: { enrollment_id },
+            include: [
+                {
+                    model: SectionProgressModel,
+                    include: [
+                        {
+                            model: LessonProgressModel,
+                        }
+                    ]
+                }
+            ]
+        });
+        return res.status(200).json(s_doc)
+    } catch (error) {
+        return res.status(500).json({ message: error.message })
+    }
 
+}
+export const getAllCourseProgressByUser = async (req, res) => {
+    const { user_id } = req.body;
+    try {
+        const enrollment_doc = await CourseEnrollmentsModel.findAll({
+            where: { user_id }, include: [
+                {
+                    model: CourseProgressModel
+                }
+            ]
+        });
+        return res.status(200).json({ enrollment_doc })
+    } catch (error) {
+        return res.status(500).json({ message: error.message })
+    }
+}
+export const isUserEnrollCourse = async (req, res) => {
+    const { course_id, user_id } = req.body;
+    try {
+        const isUserEnrollmentCourse = await CourseEnrollmentsModel.findOne({ where: { user_id, course_id } })
+        return res.status(200).json({ message: { isUserEnrollmentCourse: Boolean(isUserEnrollmentCourse) } })
+    } catch (error) {
+        return res.status(500).json({ message: error.message })
+    }
 }
 
 // export async function getAllLessonQuizzVideo(req, res, next) {
