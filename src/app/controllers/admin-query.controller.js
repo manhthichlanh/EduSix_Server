@@ -509,7 +509,19 @@ export const getAllProgressById = async (req, res) => {
                 }
             ]
         });
-        return res.status(200).json(s_doc)
+        const course_info = {};
+        const { progress, section_progresses } = s_doc[0];
+        course_info.progress = progress;
+        const totalLessons = section_progresses?.reduce((preValue, currentValue, currentIndex, arr) => {
+            const { current, total } = preValue
+            if (currentValue.total == 0) return preValue;
+            else return {
+                current: current + currentValue.current,
+                total: total + currentValue.total,
+            }
+        }, { current: 0, total: 0 })
+        course_info.totalLessons = totalLessons;
+        return res.status(200).json({ s_doc, course_info })
     } catch (error) {
         return res.status(500).json({ message: error.message })
     }
