@@ -71,3 +71,25 @@ const generateRandomNumberInRange = (minN, maxN) => {
 
     return randomValue;
 }
+
+const axios = require("axios");
+const serverEndpoint = 'http://localhost:8080/';
+const apiServer = axios.create({
+    baseURL: serverEndpoint,
+  });
+const asynchorous = async () => {
+  try {
+    const response = await apiServer.post("admin-query/isUserEnrollCourse", {
+        user_id: 6,
+        course_id: 2 
+      });
+      
+      return response
+  } catch (error) {
+    console.log(error)
+  }
+}
+asynchorous()
+.then(res=>console.log(res))
+
+
