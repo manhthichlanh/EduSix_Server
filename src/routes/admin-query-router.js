@@ -15,6 +15,11 @@ export default function initAdminQueryRoute(app) {
     router.delete('/deleteLessonQuizzVideo/:lesson_id', initAdminQuery.deleteLessonQuizzVideo);
     router.get('/getLessonVideoQuizz/', initAdminQuery.getAllLessonVideoQuizz);
     router.get('/getLessonVideoQuizzBySectionId', initAdminQuery.getAllLessonVideoQuizzBySectionId)
+    router.post('/enrollmentCourse', initAdminQuery.userEnrollCourse)
+    router.post('/updateProgress', initAdminQuery.updateProgress)
+    router.get('/getAllProgress', initAdminQuery.getAllProgressById)
+    router.get('/getAllCourseProgressByUser', initAdminQuery.getAllCourseProgressByUser);
+    router.get('/isUserEnrollCourse', initAdminQuery.isUserEnrollCourse)
     // router.post("/updateQuizz/:id", initQuizz.updateQuizz);
     // router.delete("/deleteQuizzById/:id", initQuizz.deleteQuizzById);
     // //router client
