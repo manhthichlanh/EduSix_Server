@@ -492,7 +492,7 @@ export const updateProgress = async (req, res) => {
     }
 }
 export const getAllProgressById = async (req, res) => {
-    const { course_id, user_id } = req.body;
+    const { course_id, user_id } = req.query;
     try {
         const enrollment_doc = await CourseEnrollmentsModel.findOne({ where: { course_id, user_id } });
         const { enrollment_id } = enrollment_doc;
@@ -528,7 +528,7 @@ export const getAllProgressById = async (req, res) => {
 
 }
 export const getAllCourseProgressByUser = async (req, res) => {
-    const { user_id } = req.body;
+    const { user_id } = req.query;
     try {
         const enrollment_doc = await CourseEnrollmentsModel.findAll({
             where: { user_id }, include: [
@@ -543,7 +543,7 @@ export const getAllCourseProgressByUser = async (req, res) => {
     }
 }
 export const isUserEnrollCourse = async (req, res) => {
-    const { course_id, user_id } = req.body;
+    const { course_id, user_id } = req.query;
     try {
         const isUserEnrollmentCourse = await CourseEnrollmentsModel.findOne({ where: { user_id, course_id } })
         return res.status(200).json({ message: { isUserEnrollmentCourse: Boolean(isUserEnrollmentCourse) } })
