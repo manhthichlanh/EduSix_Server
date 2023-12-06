@@ -248,56 +248,66 @@ export const getVideoStream = async (req, res) => {
     const hlsPath = "public/videos/hls/"
     const filePath = path.join(hlsPath, fileName)
     // console.log(filePath)
-    try {
-        if (!fs.existsSync(filePath)) {
-            // console.log("cóa")
-            console.log('file not found: ' + fileName);
-            res.writeHead(404, { 'Content-Type': 'text/plain' });
-            res.write('file not found: %s\n', fileName);
-            res.end();
-        }
-    } catch (error) {
-        console.log(error)
-    }
+    // try {
+    //     if (!fs.existsSync(filePath)) {
+    //         // console.log("cóa")
+    //         console.log('file not found: ' + fileName);
+    //         res.writeHead(404, { 'Content-Type': 'text/plain' });
+    //         res.write('file not found: %s\n', fileName);
+    //         res.end();
+    //     }
+    // } catch (error) {
+    //     console.log(error)
+    // }
 
     switch (path.extname(fileName)) {
         case ".m3u8":
-            try {
-                const m3u8Data = await fs.promises.readFile(filePath, "utf-8");
-                res.setHeader('Content-Type', 'application/vnd.apple.mpegurl');
-                res.end(m3u8Data);
+            fs.readFile(filePath, "utf-8", function (err, data) {
+                if (data) {
+                    res.setHeader('Content-Type', 'application/vnd.apple.mpegurl');
+                    res.end(data);
+                }
+                if (err) {
+                    console.log(err)
+                }
+            });
 
-            } catch (error) {
-                console.log(error)
-            }
             break;
         case ".ts":
-            const stat = fs.statSync(filePath);
-            const fileSize = stat.size;
-            const range = req.headers.range;
-            if (range) {
-                const parts = range.replace(/bytes=/, "").split("-");
-                const start = parseInt(parts[0], 10);
-                const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
-                const chunksize = (end - start) + 1;
-                const file = await fs.promises.createReadStream(filePath, { start, end });
-                const head = {
-                    'Content-Range': `bytes ${start}-${end}/${fileSize}`,
-                    'Accept-Ranges': 'bytes',
-                    'Content-Length': chunksize,
-                    'Content-Type': 'video/mp2t',
-                };
+            fs.stat(filePath, (err, stat) => {
+                if (err) {
+                    console.log(err)
+                }
+                if (stat) {
+                    const fileSize = stat.size;
+                    const range = req.headers.range;
+                    if (range) {
+                        const parts = range.replace(/bytes=/, "").split("-");
+                        const start = parseInt(parts[0], 10);
+                        const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
+                        const chunksize = (end - start) + 1;
+                        const file = fs.createReadStream(filePath, { start, end });
+                        const head = {
+                            'Content-Range': `bytes ${start}-${end}/${fileSize}`,
+                            'Accept-Ranges': 'bytes',
+                            'Content-Length': chunksize,
+                            'Content-Type': 'video/mp2t',
+                        };
 
-                res.writeHead(206, head);
-                file.pipe(res);
-            } else {
-                const head = {
-                    'Content-Length': fileSize,
-                    'Content-Type': 'video/mp2t',
-                };
-                res.writeHead(200, head);
-                fs.createReadStream(filePath).pipe(res);
+                        res.writeHead(206, head);
+                        file.pipe(res);
+                    } else {
+                        const head = {
+                            'Content-Length': fileSize,
+                            'Content-Type': 'video/mp2t',
+                        };
+                        res.writeHead(200, head);
+                        fs.createReadStream(filePath).pipe(res);
+                    }
+                }
             }
+            );
+
             break;
         default:
 
