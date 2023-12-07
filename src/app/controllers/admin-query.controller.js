@@ -21,11 +21,41 @@ export const createLessonWithVideo = async (req, res, next) => {
     const t = await sequelize.transaction();
     try {
         const ordinal_number = generateRandomNumberWithRandomDigits(1, 3);
-
+        const section_current = await SectionModel.findOne({
+            where: { section_id }
+        })
+        const { sections } = await CourseModel.findOne({
+            where: {
+                course_id: section_current.course_id
+            },
+            include: [
+                {
+                    model: SectionModel,
+                    include: {
+                        model: LessonModel
+                    }
+                }
+            ]
+        })
+        let count_current_lesson = 0;
+        sections.map(section => {
+            section.map(() => {
+                count_current_lesson++;
+            }
+            )
+        })
+        // const count_current_lesson = sections?.reduce((prevValue, currentValue, curentIndex, arr) => {
+        //     let lesson_count = 0;
+        //     currentValue.map(lessons => {
+        //         lesson_count++;
+        //     })
+        //     return prevValue + lesson_count;
+        // }, 0
+        // )
         // await sequelize.transaction(async (t) => {
         // Tạo bài học mới
         const newLesson = await LessonModel.create({
-            section_id, name, content, type: lesson_type, duration, ordinal_number
+            section_id, name, content, type: lesson_type, duration, ordinal_number, is_lock: count_current_lesson > 0 ? false : true
         }, { transaction: t });
         //Cập nhật trường thứ tự (ordinal_number = lesson_id) của lesson vừa tạo
         await newLesson.update({ ordinal_number: newLesson.lesson_id }, { fields: ['ordinal_number'], transaction: t });
@@ -80,6 +110,7 @@ export async function createLessonQuizz(req, res, next) {
         const { section_id, name, content, lesson_type, quizzes } = req.body;
         const duration = generateRandomNumberWithRandomDigits(1, 3);
         const ordinal_number = duration;
+
         const result = await sequelize.transaction(async (t) => {
 
             const LessonQuizzDoc = await LessonModel.create({

@@ -40,6 +40,10 @@ const LessonModel = sequelize.define("lesson", {
     ordinal_number: {
         type: DataTypes.INTEGER,
     },
+    is_lock: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false
+    }
 }, {
     createdAt: "created_at",
     updatedAt: "updated_at"});
