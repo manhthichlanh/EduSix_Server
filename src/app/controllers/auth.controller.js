@@ -17,7 +17,6 @@ const privateKey = readFileSync("SSL/private-key.txt", "utf-8");
 const publicKey = readFileSync("SSL/public-key.txt", "utf-8");
 // Example using Express.js
 
-  
 const generatePassword = (password) => {
     return new Promise((resolve, reject) => {
         const saltRounds = 10; // Số lượng vòng lặp băm (tăng độ an toàn)
@@ -179,16 +178,15 @@ export const googleAuth2 = async (req, res, next) => {
             const hashedPassword = await generatePassword(password);
 
             // Generate a unique user_id using uuid
-            const user_id = uuidv4();
 
             const user = await UserModel.create(
-                { user_id, sub_id: googleUser.id, fullname, avatar, nickname, email, password: hashedPassword, status: true }
+                { sub_id: googleUser.id, fullname, avatar, nickname, email, password: hashedPassword, status: true }
             )
             console.log(user)
         } else {
             // Existing user logic remains unchanged
         }
-        const manual_token = jwt.sign({ sub_id: googleUser.id, userId: existUser.user_id }, privateKey, {
+        const manual_token = jwt.sign({ sub_id: googleUser.id}, privateKey, {
             algorithm: 'RS256',
             expiresIn: "7d",
         });
