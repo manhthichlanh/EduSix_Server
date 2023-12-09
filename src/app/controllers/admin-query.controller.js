@@ -477,7 +477,7 @@ export const userEnrollCourse = async (req, res) => {
                 })
             );
             // Làm phẳng mảng SectionProgressSaveIDArr
-            SectionProgressSaveIDArr.flat();
+            const flattenedResult = SectionProgressSaveIDArr.flat();
 
             const LessonProgressSave = await LessonProgressModel.bulkCreate(flattenedResult, { transaction: t })
             await Promise.all(
@@ -526,15 +526,21 @@ export const updateProgress = async (req, res) => {
             const { lesson_progress_id, current, total } = lesson_progresses[0];
             LessonProgressModel.findOne(
                 {
-                    where: { lesson_progress_id },
+                    where: { lesson_progress_id: {
+                        [Op.gt]: lesson_progress_id
+                    } },
                     order: [['lesson_progress_id', 'ASC']], // Sắp xếp theo ID tăng dần
                 })
                 .then(
                     greaterThanLessonCurrent => {
-                        greaterThanLessonCurrent.is_lock = false;
-                        greaterThanLessonCurrent.save({ transaction: t })
+                        if (greaterThanLessonCurrent) {
+                            console.log({greaterThanLessonCurrent})
+                            greaterThanLessonCurrent.is_lock = false;
+                            greaterThanLessonCurrent.save({ transaction: t })
+                        }
                     }
                 )
+                .catch(err=>console.log(err))
             if (current < total) await LessonProgressModel.update({ current: 1, is_finish: true }, { where: { lesson_progress_id } }, { transaction: t });
             const section_progress_one = await SectionProgressModel.findOne({ where: { section_progress_id } });
             if (section_progress_one.current < section_progress_one.total) {
@@ -559,7 +565,7 @@ export const updateProgress = async (req, res) => {
                     return prevValue + ((current / total) / countLesson)
             }, 0
             )
-            await CourseProgressModel.update({ progress: course_progress_value }, { where: { enrollment_id } });
+            await CourseProgressModel.update({ progress: course_progress_value }, { where: { enrollment_id } }, {transaction: t});
             // await SectionProgressModel.increment
             return res.status(200).json({ message: "Cập nhật tiến độ cho bài học thành công!" });
         })
