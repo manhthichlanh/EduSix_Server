@@ -5,7 +5,7 @@ import SectionModel from "./../models/section.model"
 import AnswerModel from "../models/answer.model";
 import AppError from "../../utils/appError";
 import sequelize from "../models/db";
-import { Op } from 'sequelize';
+import { Op, where } from 'sequelize';
 import { ReE, ReS } from '../../utils/util.service';
 import { generateRandomNumberWithRandomDigits, getAndDeleteHLSFile } from "../../utils/util.helper";
 import CourseModel from "../models/course.model";
@@ -518,7 +518,11 @@ export const updateProgress = async (req, res) => {
             const { course_progress_id, section_progresses } = s_doc;
             const { lesson_progresses, section_progress_id } = section_progresses[0];
             const { lesson_progress_id, current, total } = lesson_progresses[0];
-            LessonProgressModel.findOne({ lesson_progress_id })
+            LessonProgressModel.findOne(
+                {
+                    where: { lesson_progress_id },
+                    order: [['lesson_progress_id', 'ASC']], // Sắp xếp theo ID tăng dần
+                })
             .then(
                 greaterThanLessonCurrent => {
                     greaterThanLessonCurrent.is_lock = false;
