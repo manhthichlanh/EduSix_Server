@@ -529,15 +529,21 @@ export const getAllProgressById = async (req, res) => {
 }
 export const getAllCourseProgressByUser = async (req, res) => {
     const { user_id } = req.query;
+    console.log(user_id)
     try {
         const enrollment_doc = await CourseEnrollmentsModel.findAll({
-            where: { user_id }, include: [
+            where: { user_id },
+            include: [
                 {
                     model: CourseProgressModel
                 }
             ]
         });
-        return res.status(200).json({ enrollment_doc })
+        const newCourseProgress = enrollment_doc.map(item => {
+            const { course_progresses } = item;
+            return course_progresses[0];
+        })
+        return res.status(200).json({ course_progresses_doc: newCourseProgress })
     } catch (error) {
         return res.status(500).json({ message: error.message })
     }

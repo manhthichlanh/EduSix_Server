@@ -24,14 +24,14 @@ export const createCourse = async (req, res) => {
         }
 
         // Tạo khóa học
-        const { category_id, user_id, name, course_price, slug, content, status, type } = req.body;
+        const { category_id, admin_id, name, course_price, slug, content, status, type } = req.body;
         const fileName = Date.now() + '-' + uploadedFile.originalname.toLowerCase().split(" ").map(item => item.trim()).join("");
 
         await sequelize.transaction(async (transaction) => {
             const newRecord = await CourseModel.create(
                 {
                     category_id,
-                    user_id,
+                    admin_id,
                     name,
                     course_price,
                     slug,
@@ -143,7 +143,7 @@ export const updateCourse = async (req, res) => {
             return res.status(400).json({ message: "Vui lòng upload file thumbnail!" });
         }
 
-        const { category_id, user_id, name, course_price, slug, content, status, type } = req.body;
+        const { category_id, admin_id, name, course_price, slug, content, status, type } = req.body;
         const fileName = Date.now() + '-' + uploadedFile.originalname.toLowerCase().split(" ").map(item => item.trim()).join("");
 
         await sequelize.transaction(async (t) => {
@@ -151,7 +151,7 @@ export const updateCourse = async (req, res) => {
             await record.update(
                 {
                     category_id,
-                    user_id,
+                    admin_id,
                     name,
                     // number_of_lessons: 0,
                     course_price,
