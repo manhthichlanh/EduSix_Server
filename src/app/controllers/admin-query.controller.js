@@ -5,6 +5,7 @@ import SectionModel from "./../models/section.model"
 import AnswerModel from "../models/answer.model";
 import AppError from "../../utils/appError";
 import sequelize from "../models/db";
+import { Op } from 'sequelize';
 import { ReE, ReS } from '../../utils/util.service';
 import { generateRandomNumberWithRandomDigits, getAndDeleteHLSFile } from "../../utils/util.helper";
 import CourseModel from "../models/course.model";
@@ -21,9 +22,11 @@ export const createLessonWithVideo = async (req, res, next) => {
     const t = await sequelize.transaction();
     try {
         const ordinal_number = generateRandomNumberWithRandomDigits(1, 3);
+        //Tìm phần học theo id tương ứng
         const section_current = await SectionModel.findOne({
             where: { section_id }
         })
+        //Tìm tất cả các phần học chứa bài học trong inner join 3 bảng Courses, Sections, Lessons
         const { sections } = await CourseModel.findOne({
             where: {
                 course_id: section_current.course_id
@@ -37,29 +40,27 @@ export const createLessonWithVideo = async (req, res, next) => {
                 }
             ]
         })
-        let count_current_lesson = 0;
-        sections.map(section => {
-            section.map(() => {
-                count_current_lesson++;
+        // let tính tổng sổ bài học
+        const count_current_lesson = sections?.reduce((total, value) => {
+            if (value) {
+                const { lessons } = value;
+                return total + lessons.length;
+            } else {
+                return total
             }
-            )
-        })
-        // const count_current_lesson = sections?.reduce((prevValue, currentValue, curentIndex, arr) => {
-        //     let lesson_count = 0;
-        //     currentValue.map(lessons => {
-        //         lesson_count++;
-        //     })
-        //     return prevValue + lesson_count;
-        // }, 0
-        // )
+        }, 0
+        )
         // await sequelize.transaction(async (t) => {
         // Tạo bài học mới
         const newLesson = await LessonModel.create({
-            section_id, name, content, type: lesson_type, duration, ordinal_number, is_lock: count_current_lesson > 0 ? false : true
+            section_id, name, content, type: lesson_type, duration, ordinal_number,
+            //Nếu là bài đầu tiên thì mở ngược lại thì không
+            is_lock: count_current_lesson > 0 ? true : false
         }, { transaction: t });
         //Cập nhật trường thứ tự (ordinal_number = lesson_id) của lesson vừa tạo
         await newLesson.update({ ordinal_number: newLesson.lesson_id }, { fields: ['ordinal_number'], transaction: t });
         //Tạo video mới 
+
         const newVideo = await VideoModel.create({
             lesson_id: newLesson.lesson_id,
             file_videos: fileName + ".m3u8",
@@ -112,7 +113,33 @@ export async function createLessonQuizz(req, res, next) {
         const ordinal_number = duration;
 
         const result = await sequelize.transaction(async (t) => {
-
+            const section_current = await SectionModel.findOne({
+                where: { section_id }
+            })
+            //Tìm tất cả các phần học chứa bài học trong inner join 3 bảng Courses, Sections, Lessons
+            const { sections } = await CourseModel.findOne({
+                where: {
+                    course_id: section_current.course_id
+                },
+                include: [
+                    {
+                        model: SectionModel,
+                        include: {
+                            model: LessonModel
+                        }
+                    }
+                ]
+            })
+            // let tính tổng sổ bài học
+            const count_current_lesson = sections?.reduce((total, value) => {
+                if (value) {
+                    const { lessons } = value;
+                    return total + lessons.length
+                } else {
+                    return total
+                }
+            }, 0
+            )
             const LessonQuizzDoc = await LessonModel.create({
                 section_id,
                 name,
@@ -122,6 +149,7 @@ export async function createLessonQuizz(req, res, next) {
                 type: lesson_type,
                 duration,
                 ordinal_number,
+                is_lock: count_current_lesson > 0 ? false : true
             }, { transaction: t });
 
             let durationSet = 0;
@@ -435,7 +463,8 @@ export const userEnrollCourse = async (req, res) => {
                         section_progress_id: item.section_progress_id,
                         current: 0,
                         total: 1,
-                        is_finish: false
+                        is_finish: false,
+                        is_lock: lesson.is_lock
                     }));
                     return lessonSelectedArr;
                 })
@@ -455,7 +484,6 @@ export const userEnrollCourse = async (req, res) => {
                     await section.save({ transaction: t })
                 })
             )
-
             return res.status(200).json({ message: "Đăng ký khóa học thành công", user_id: user_id, course_id: course_id })
         })
     } catch (error) {
@@ -486,9 +514,17 @@ export const updateProgress = async (req, res) => {
                 ]
             });
             if (!s_doc) return res.status(400).json({ message: "Không tìm thấy dữ liệu tương ứng!" })
+
             const { course_progress_id, section_progresses } = s_doc;
             const { lesson_progresses, section_progress_id } = section_progresses[0];
             const { lesson_progress_id, current, total } = lesson_progresses[0];
+            LessonProgressModel.findOne({ lesson_progress_id })
+            .then(
+                greaterThanLessonCurrent => {
+                    greaterThanLessonCurrent.is_lock = false;
+                    greaterThanLessonCurrent.save({ transaction: t })
+                }
+            )
             if (current < total) await LessonProgressModel.update({ current: 1, is_finish: true }, { where: { lesson_progress_id } }, { transaction: t });
             const section_progress_one = await SectionProgressModel.findOne({ where: { section_progress_id } });
             if (section_progress_one.current < section_progress_one.total) {
@@ -505,11 +541,12 @@ export const updateProgress = async (req, res) => {
         await sequelize.transaction(async (t) => {
             const newSectionProgress_doc = await SectionProgressModel.findAll({ where: { course_progress_id } });
             const course_progress_value = newSectionProgress_doc?.reduce((prevValue, currentValue, curentIndex, arr) => {
-                console.log(currentValue)
+                console.log(currentValue);
+                const countLesson = arr.filter(item=>item.total!=0).length;
                 const { current, total } = currentValue
                 if (total == 0) return prevValue;
                 else
-                    return prevValue + ((current / total) / arr.length)
+                    return prevValue + ((current / total) / countLesson)
             }, 0
             )
             await CourseProgressModel.update({ progress: course_progress_value }, { where: { enrollment_id } });
@@ -543,6 +580,8 @@ export const getAllProgressById = async (req, res) => {
         const course_info = {};
         const { progress, section_progresses } = s_doc[0];
         course_info.progress = progress;
+
+
         const totalLessons = section_progresses?.reduce((preValue, currentValue, currentIndex, arr) => {
             const { current, total } = preValue
             if (currentValue.total == 0) return preValue;
