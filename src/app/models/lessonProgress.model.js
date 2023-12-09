@@ -28,7 +28,6 @@ const LessonProgressModel = sequelize.define("lesson_progress", {
     },
     is_lock: {
         type: DataTypes.BOOLEAN,
-        defaultValue: true
     }
 }, {
     createdAt: "created_at",

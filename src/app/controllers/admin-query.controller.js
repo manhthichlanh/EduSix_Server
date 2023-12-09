@@ -13,7 +13,6 @@ import CourseEnrollmentsModel from "../models/courseEnrollment.model";
 import CourseProgressModel from "../models/courseProgress.model";
 import SectionProgressModel from "../models/sectionProgress.model";
 import LessonProgressModel from "../models/lessonProgress.model";
-import { model } from "mongoose";
 export const createLessonWithVideo = async (req, res, next) => {
     const { section_id, name, content, lesson_type, file_videos, youtube_id, duration, video_type } = req.body;
     const uploadedFile = req.file;
@@ -43,8 +42,12 @@ export const createLessonWithVideo = async (req, res, next) => {
         // let tính tổng sổ bài học
         const count_current_lesson = sections?.reduce((total, value) => {
             if (value) {
-                const { lessons } = value;
-                return total + lessons.length;
+                const {lessons} = value;
+                if (lessons.length==0) return total;
+                const totalLessons = lessons.reduce((lessonTotal, currentLesson) => {
+                    return lessonTotal + 1;
+                },0)
+                return total + totalLessons
             } else {
                 return total
             }
@@ -134,7 +137,11 @@ export async function createLessonQuizz(req, res, next) {
             const count_current_lesson = sections?.reduce((total, value) => {
                 if (value) {
                     const { lessons } = value;
-                    return total + lessons.length
+                    if (lessons.length==0) return total;
+                    const totalLessons = lessons.reduce((lessonTotal, currentLesson) => {
+                        return lessonTotal + 1;
+                    },0)                   
+                    return total + totalLessons
                 } else {
                     return total
                 }
@@ -149,7 +156,7 @@ export async function createLessonQuizz(req, res, next) {
                 type: lesson_type,
                 duration,
                 ordinal_number,
-                is_lock: count_current_lesson > 0 ? false : true
+                is_lock: count_current_lesson > 0 ? true : false
             }, { transaction: t });
 
             let durationSet = 0;
@@ -469,9 +476,8 @@ export const userEnrollCourse = async (req, res) => {
                     return lessonSelectedArr;
                 })
             );
-
             // Làm phẳng mảng SectionProgressSaveIDArr
-            const flattenedResult = SectionProgressSaveIDArr.flat();
+            SectionProgressSaveIDArr.flat();
 
             const LessonProgressSave = await LessonProgressModel.bulkCreate(flattenedResult, { transaction: t })
             await Promise.all(
@@ -523,12 +529,12 @@ export const updateProgress = async (req, res) => {
                     where: { lesson_progress_id },
                     order: [['lesson_progress_id', 'ASC']], // Sắp xếp theo ID tăng dần
                 })
-            .then(
-                greaterThanLessonCurrent => {
-                    greaterThanLessonCurrent.is_lock = false;
-                    greaterThanLessonCurrent.save({ transaction: t })
-                }
-            )
+                .then(
+                    greaterThanLessonCurrent => {
+                        greaterThanLessonCurrent.is_lock = false;
+                        greaterThanLessonCurrent.save({ transaction: t })
+                    }
+                )
             if (current < total) await LessonProgressModel.update({ current: 1, is_finish: true }, { where: { lesson_progress_id } }, { transaction: t });
             const section_progress_one = await SectionProgressModel.findOne({ where: { section_progress_id } });
             if (section_progress_one.current < section_progress_one.total) {
@@ -546,7 +552,7 @@ export const updateProgress = async (req, res) => {
             const newSectionProgress_doc = await SectionProgressModel.findAll({ where: { course_progress_id } });
             const course_progress_value = newSectionProgress_doc?.reduce((prevValue, currentValue, curentIndex, arr) => {
                 console.log(currentValue);
-                const countLesson = arr.filter(item=>item.total!=0).length;
+                const countLesson = arr.filter(item => item.total != 0).length;
                 const { current, total } = currentValue
                 if (total == 0) return prevValue;
                 else

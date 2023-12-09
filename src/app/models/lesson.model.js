@@ -42,7 +42,6 @@ const LessonModel = sequelize.define("lesson", {
     },
     is_lock: {
         type: DataTypes.BOOLEAN,
-        defaultValue: true
     }
 }, {
     createdAt: "created_at",
