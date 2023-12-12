@@ -1,5 +1,6 @@
 import { Router } from "express";
 let router = Router();
+import { uploadImageOnMemory } from "../app/configs/uploadImages.config";
 
 import * as initUser from "../app/controllers/user.controller"
 import { protect } from "../app/controllers/auth.controller";
@@ -9,5 +10,6 @@ export default function initUserRoute(app) {
     router.get("/:id", initUser.getCourseById)
     router.delete("/:id", initUser.deleteUser)
     router.put("/:id", initUser.updateUser)
+    router.patch("/update/:user_id", uploadImageOnMemory.single("avatar"),initUser.updateFieldsUser)
     app.use("/user", router);
 }

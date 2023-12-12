@@ -43,65 +43,92 @@ export const checkRequestVideo = async (req, res, next) => {
         return res.status(401).json({ message: `Bài học theo lesson_id:${lesson_id} trên đã tồn tại!` })
     }
 }
+// const getResolution = async (filePath) => {
+
+//     const { stdout } = await $`ffprobe ${[
+//         '-v',
+//         'error',
+//         '-select_streams',
+//         'v:0',
+//         '-show_entries',
+//         'stream=width,height',
+//         '-of',
+//         'csv=s=x:p=0',
+//         slash(filePath)
+//     ]}`
+//     const resolution = stdout.trim().split('x')
+//     const [width, height] = resolution
+//     return {
+//         width: Number(width),
+//         height: Number(height)
+//     }
+// }
 export const convertToHLS = async (req, res) => {
     // console.log(_initEmitter(123))
     const { fileName, lessonWithVideo, transaction } = req.body;
     const hlsPath = `public/videos/hls/`;
     const videoPath = `public/videos/`;
-    if (!fs.existsSync(videoPath)) await fs.promises.mkdir(videoPath)
-    const uploadedFile = req.file;
-
-    const socketID = req.headers["socket-id"];
-
-    if (!socketID) return res.status(400).json({ message: "Client chưa kết nối socket-id!" })
-    const inputFilePath = path.join(videoPath, fileName);
-    console.log(inputFilePath);
     try {
-        await fs.promises.writeFile(inputFilePath, uploadedFile?.buffer)
+        if (!fs.existsSync(videoPath)) await fs.promises.mkdir(videoPath)
+        const uploadedFile = req.file;
+
+        const socketID = req.headers["socket-id"];
+
+        if (!socketID) return res.status(400).json({ message: "Client chưa kết nối socket-id!" })
+        const inputFilePath = path.join(videoPath, fileName);
+
+        console.log(inputFilePath);
+        try {
+            await fs.promises.writeFile(inputFilePath, uploadedFile?.buffer)
+        } catch (error) {
+            return res.status("500").json(error.message)
+        }
+        const m3u8FilePath = path.join(hlsPath, fileName + ".m3u8");
+        console.log(m3u8FilePath)
+        const command = ffmpeg()
+            .input(inputFilePath)
+            .addOption('-f', 'hls')
+            .addOption('-hls_time', 10)
+            .addOption('-hls_list_size', 0)
+            .addOption('-codec:v', 'libx264')
+            .addOption('-preset', 'ultrafast')
+            .addOption('-hls_flags', 'delete_segments')
+            .output(m3u8FilePath)
+            .on('start', function () {
+                console.log("start");
+                // console.log(
+                console.log("socketSide id:" + socketID)
+
+                _initEmitter(socketID).emit("init_ffmpeg_command", command)
+                // )
+            })
+
+            .on('end', async () => {
+                console.log('HLS conversion finished.');
+                // Remove the temporary input file
+                await fs.promises.unlink(inputFilePath)
+                console.log("ngừng")
+                req.body.fileName = fileName;
+                await transaction.commit();
+                return res.status(201).json(lessonWithVideo);
+            })
+            .on('error', async (err) => {
+                console.error('Error:', err);
+                try {
+                    await getAndDeleteHLSFile(m3u8FilePath, hlsPath);
+                    await fs.promises.unlink(inputFilePath);
+                    return res.status(500).json({ messge: err })
+                } catch (error) {
+                    console.log(error)
+                    return res.status(500).json({ message: error?.message })
+                }
+            });
+
+        command.run();
     } catch (error) {
-        return res.status("500").json(error.message)
+        await transaction.commit();
+        return res.status(500).json({message: error.message})
     }
-    const m3u8FilePath = path.join(hlsPath, fileName + ".m3u8");
-    console.log(m3u8FilePath)
-    const command = ffmpeg()
-        .input(inputFilePath)
-        .addOption('-f', 'hls')
-        .addOption('-hls_time', 10)
-        .addOption('-hls_list_size', 0)
-        .addOption('-codec:v', 'libx264')
-        .addOption('-preset', 'ultrafast')
-        .addOption('-hls_flags', 'delete_segments')
-        .output(m3u8FilePath)
-        .on('start', function () {
-            console.log("start");
-            // console.log(
-            console.log("socketSide id:" + socketID)
 
-            _initEmitter(socketID).emit("init_ffmpeg_command", command)
-            // )
-        })
-
-        .on('end', async () => {
-            console.log('HLS conversion finished.');
-            // Remove the temporary input file
-            await fs.promises.unlink(inputFilePath)
-            console.log("ngừng")
-            req.body.fileName = fileName;
-            await transaction.commit();
-            return res.status(201).json(lessonWithVideo);
-        })
-        .on('error', async (err) => {
-            console.error('Error:', err);
-            try {
-                await getAndDeleteHLSFile(m3u8FilePath, hlsPath);
-                await fs.promises.unlink(inputFilePath);
-                return res.status(500).json({ messge: err })
-            } catch (error) {
-                console.log(error)
-                return res.status(500).json({ message: error?.message })
-            }
-        });
-
-    command.run();
 
 }
