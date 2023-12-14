@@ -136,7 +136,17 @@ export const updateFieldsUser = async (req, res) => {
         return res.status(500).json({ message: error.message });
     }
 }
-
+export const getImage = async (req, res) => {
+    const fileName = req.params.fileName;
+    let file
+    console.log(filePath(fileName))
+    try {
+        file = await fs.promises.readFile(filePath(fileName));
+        return res.status(200).send(file)
+    } catch (error) {
+        return res.status(404).json({ message: "Không tìm thấy file!" })
+    }
+}
 export const deleteUser = async (req, res) => {
     try {
         const record = await UserModel.findByPk(req.params.id);

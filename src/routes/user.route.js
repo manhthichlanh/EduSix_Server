@@ -11,5 +11,6 @@ export default function initUserRoute(app) {
     router.delete("/:id", initUser.deleteUser)
     router.put("/:id", initUser.updateUser)
     router.patch("/update/:user_id", uploadImageOnMemory.single("avatar"),initUser.updateFieldsUser)
+    router.get("/avatar/:fileName", initUser.getImage)
     app.use("/user", router);
 }
