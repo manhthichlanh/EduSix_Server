@@ -7,12 +7,13 @@ import AppError from "../../utils/appError";
 import sequelize from "../models/db";
 import { Op, where } from 'sequelize';
 import { ReE, ReS } from '../../utils/util.service';
-import { generateRandomNumberWithRandomDigits, getAndDeleteHLSFile } from "../../utils/util.helper";
+import { generateRandomNumberWithRandomDigits, getAndDeleteHLSFile, generateRandomString } from "../../utils/util.helper";
 import CourseModel from "../models/course.model";
 import CourseEnrollmentsModel from "../models/courseEnrollment.model";
 import CourseProgressModel from "../models/courseProgress.model";
 import SectionProgressModel from "../models/sectionProgress.model";
 import LessonProgressModel from "../models/lessonProgress.model";
+import CertificateModel from "../models/certificate.model";
 export const createLessonWithVideo = async (req, res, next) => {
     const { section_id, name, content, lesson_type, file_videos, youtube_id, duration, video_type } = req.body;
     const uploadedFile = req.file;
@@ -42,11 +43,11 @@ export const createLessonWithVideo = async (req, res, next) => {
         // let tính tổng sổ bài học
         const count_current_lesson = sections?.reduce((total, value) => {
             if (value) {
-                const {lessons} = value;
-                if (lessons.length==0) return total;
+                const { lessons } = value;
+                if (lessons.length == 0) return total;
                 const totalLessons = lessons.reduce((lessonTotal, currentLesson) => {
                     return lessonTotal + 1;
-                },0)
+                }, 0)
                 return total + totalLessons
             } else {
                 return total
@@ -137,10 +138,10 @@ export async function createLessonQuizz(req, res, next) {
             const count_current_lesson = sections?.reduce((total, value) => {
                 if (value) {
                     const { lessons } = value;
-                    if (lessons.length==0) return total;
+                    if (lessons.length == 0) return total;
                     const totalLessons = lessons.reduce((lessonTotal, currentLesson) => {
                         return lessonTotal + 1;
-                    },0)                   
+                    }, 0)
                     return total + totalLessons
                 } else {
                     return total
@@ -526,21 +527,23 @@ export const updateProgress = async (req, res) => {
             const { lesson_progress_id, current, total } = lesson_progresses[0];
             LessonProgressModel.findOne(
                 {
-                    where: { lesson_progress_id: {
-                        [Op.gt]: lesson_progress_id
-                    } },
+                    where: {
+                        lesson_progress_id: {
+                            [Op.gt]: lesson_progress_id
+                        }
+                    },
                     order: [['lesson_progress_id', 'ASC']], // Sắp xếp theo ID tăng dần
                 })
                 .then(
                     greaterThanLessonCurrent => {
                         if (greaterThanLessonCurrent) {
-                            console.log({greaterThanLessonCurrent})
+                            console.log({ greaterThanLessonCurrent })
                             greaterThanLessonCurrent.is_lock = false;
                             greaterThanLessonCurrent.save({ transaction: t })
                         }
                     }
                 )
-                .catch(err=>console.log(err))
+                .catch(err => console.log(err))
             if (current < total) await LessonProgressModel.update({ current: 1, is_finish: true }, { where: { lesson_progress_id } }, { transaction: t });
             const section_progress_one = await SectionProgressModel.findOne({ where: { section_progress_id } });
             if (section_progress_one.current < section_progress_one.total) {
@@ -565,10 +568,34 @@ export const updateProgress = async (req, res) => {
                     return prevValue + ((current / total) / countLesson)
             }, 0
             )
-            await CourseProgressModel.update({ progress: course_progress_value }, { where: { enrollment_id } }, {transaction: t});
+            await CourseProgressModel.update({ progress: course_progress_value }, { where: { enrollment_id } }, { transaction: t });
             // await SectionProgressModel.increment
+            if (course_progress_value == 1) {
+                const sub_id = generateRandomString(16);
+                console.log(course_progress_id)
+                let total_duration = 0;
+                const SectionDoc = await SectionModel.findAll({
+                    where: { course_id },
+                    include: [
+                        {
+                            model: LessonModel,
+                        }
+                    ]
+                });
+                if (!SectionDoc) {
+                    console.log("loi ne");
+                }
+                SectionDoc.map(section => {
+                    section.lessons.map(lesson => {
+                        total_duration += lesson.duration;
+                    });
+                });
+                await CertificateModel.create({ sub_id, course_proccess_id: course_progress_id, user_id, course_id, total_duration }, { transaction: t })
+            }
             return res.status(200).json({ message: "Cập nhật tiến độ cho bài học thành công!" });
+
         })
+
 
     } catch (error) {
         console.log(error)
@@ -644,15 +671,15 @@ export const isUserEnrollCourse = async (req, res) => {
     }
 }
 export const searchCourse = async (req, res) => {
-  const searchKey = req.params.searchKey;
-  const course_doc = await CourseModel.findAll({
-    where: {
-        name: {
-            [Op.like]: `%${searchKey}%`
+    const searchKey = req.params.searchKey;
+    const course_doc = await CourseModel.findAll({
+        where: {
+            name: {
+                [Op.like]: `%${searchKey}%`
+            }
         }
-    }
-  })
-  return res.status(200).json(course_doc);
+    })
+    return res.status(200).json(course_doc);
 }
 
 // export async function getAllLessonQuizzVideo(req, res, next) {
