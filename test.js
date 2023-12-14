@@ -63,33 +63,47 @@ const crypto = require('crypto');
 //     queryArr[1]['fields'].push(`${key}`)
 // }
 // console.log(queryArr)
-const generateRandomNumberInRange = (minN, maxN) => {
-    const range = maxN - minN + 1;
+// const generateRandomNumberInRange = (minN, maxN) => {
+//     const range = maxN - minN + 1;
 
-    const randomBytes = crypto.randomBytes(4); // 4 bytes for 32 bits
-    const randomValue = (parseInt(randomBytes.toString('hex'), 16) % range) + minN;
+//     const randomBytes = crypto.randomBytes(4); // 4 bytes for 32 bits
+//     const randomValue = (parseInt(randomBytes.toString('hex'), 16) % range) + minN;
 
-    return randomValue;
-}
+//     return randomValue;
+// }
 
-const axios = require("axios");
-const serverEndpoint = 'http://localhost:8080/';
-const apiServer = axios.create({
-    baseURL: serverEndpoint,
-  });
-const asynchorous = async () => {
-  try {
-    const response = await apiServer.post("admin-query/isUserEnrollCourse", {
-        user_id: 6,
-        course_id: 2 
-      });
-      
-      return response
-  } catch (error) {
-    console.log(error)
-  }
-}
-asynchorous()
-.then(res=>console.log(res))
+// const axios = require("axios");
+// const serverEndpoint = 'http://localhost:8080/';
+// const apiServer = axios.create({
+//     baseURL: serverEndpoint,
+//   });
+// const asynchorous = async () => {
+//   try {
+//     const response = await apiServer.post("admin-query/isUserEnrollCourse", {
+//         user_id: 6,
+//         course_id: 2 
+//       });
+
+//       return response
+//   } catch (error) {
+//     console.log(error)
+//   }
+// }
+// asynchorous()
+// .then(res=>console.log(res))
 
 
+const { spawn } = require("child_process");
+
+const ls = spawn('ls', ['-l']);
+ls.stdout.on('data', (data) => {
+  console.log(`stdout: ${data}`);
+});
+
+ls.stderr.on('data', (data) => {
+  console.error(`stderr: ${data}`);
+});
+
+ls.on('close', (code) => {
+  console.log(`child process exited with code ${code}`);
+});

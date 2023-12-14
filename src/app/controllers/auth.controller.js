@@ -15,9 +15,7 @@ import { getGoogleUser, getGoogleUserInfo, getOauthGooleToken } from '../../util
 import { getFacebookUser, getOauthFacebookToken } from '../../utils/facebookAPI';
 const privateKey = readFileSync("SSL/private-key.txt", "utf-8");
 const publicKey = readFileSync("SSL/public-key.txt", "utf-8");
-// Example using Express.js
-
-const generatePassword = (password) => {
+export const generatePassword = (password) => {
     return new Promise((resolve, reject) => {
         const saltRounds = 10; // Số lượng vòng lặp băm (tăng độ an toàn)
 
@@ -31,6 +29,15 @@ const generatePassword = (password) => {
     }
     )
 }
+export const verifyPassword = async (passwordInput, passwordHashed) => {
+    try {
+        const isPasswordValid = await Promise.resolve(bcrypt.compare(passwordInput, passwordHashed));
+        return isPasswordValid;
+    } catch (error) {
+        return error;
+    }
+}
+
 export const createUser = async (req, res) => {
 
     const { fullname, avatar, nickname, email, password } = req.body;
@@ -301,7 +308,6 @@ export const verifyUserToken = (req, res, next) => {
         res.sendStatus(401);
     }
 }
-
 export const verifyAdminToken = (req, res, next) => {
     let token;
     if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {

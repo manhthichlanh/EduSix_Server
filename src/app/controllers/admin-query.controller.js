@@ -642,6 +642,17 @@ export const isUserEnrollCourse = async (req, res) => {
         return res.status(500).json({ message: error.message })
     }
 }
+export const searchCourse = async (req, res) => {
+  const searchKey = req.params.searchKey;
+  const course_doc = await CourseModel.findAll({
+    where: {
+        name: {
+            [Op.like]: `%${searchKey}%`
+        }
+    }
+  })
+  return res.status(200).json(course_doc);
+}
 
 // export async function getAllLessonQuizzVideo(req, res, next) {
 //     try {

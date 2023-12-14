@@ -20,6 +20,7 @@ export default function initAdminQueryRoute(app) {
     router.get('/getAllProgress', initAdminQuery.getAllProgressById)
     router.get('/getAllCourseProgressByUser', initAdminQuery.getAllCourseProgressByUser);
     router.get('/isUserEnrollCourse', initAdminQuery.isUserEnrollCourse)
+    router.get("/searchCourse/:searchKey", initAdminQuery.searchCourse)
     // router.post("/updateQuizz/:id", initQuizz.updateQuizz);
     // router.delete("/deleteQuizzById/:id", initQuizz.deleteQuizzById);
     // //router client
