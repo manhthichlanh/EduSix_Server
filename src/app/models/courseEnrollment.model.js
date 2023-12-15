@@ -3,7 +3,7 @@ import { DataTypes } from 'sequelize';
 // import { sequelize, DataTypes }from 'sequelize';
 const CourseEnrollmentsModel = sequelize.define("course_enrollments", {
   // Định nghĩa các trường trong bảng Users
-  enrollment_id: {
+  id: {
     type: DataTypes.INTEGER,
     primaryKey: true,
     autoIncrement: true,
