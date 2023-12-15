@@ -12,6 +12,7 @@ import QuizzModel from './quizz.models';
 import AnswerModel from './answer.model';
 import VideoModel from './video.model';
 import CertificateModel from './certificate.model';
+import FeedBackModel from './feedBack.model';
 // Định nghĩa mối quan hệ giữa User và Course
 AdminModel.hasMany(CourseModel, { foreignKey: 'admin_id' });
 CourseModel.belongsTo(AdminModel, { foreignKey: 'admin_id' });
@@ -63,6 +64,9 @@ AnswerModel.belongsTo(QuizzModel, { foreignKey: "quizz_id",as:"relaAnswer"});
 //Quan hệ giữa Quizz và Lesson
 LessonModel.hasMany(QuizzModel, { foreignKey: "lesson_id"});
 QuizzModel.belongsTo(LessonModel, { foreignKey: "lesson_id"});
-//Quan hệ giữa Quizz và Answer
+//Quan hệ giữa Quizz và Answercc
 QuizzModel.hasMany(AnswerModel, { foreignKey: "quizz_id"});
 AnswerModel.belongsTo(QuizzModel, { foreignKey: "quizz_id"});
+//Quan hệ giữa Quizz và Answercc
+FeedBackModel.belongsTo(UserModel,{foreignKey:"user_id"});
+FeedBackModel.belongsTo(CourseModel,{foreignKey:"course_id"})
