@@ -11,7 +11,7 @@ import AdminModel from './admin.model';
 import QuizzModel from './quizz.models';
 import AnswerModel from './answer.model';
 import VideoModel from './video.model';
-
+import CertificateModel from './certificate.model';
 // Định nghĩa mối quan hệ giữa User và Course
 AdminModel.hasMany(CourseModel, { foreignKey: 'admin_id' });
 CourseModel.belongsTo(AdminModel, { foreignKey: 'admin_id' });
@@ -28,6 +28,9 @@ CourseProgressModel.belongsTo(CourseEnrollmentsModel, { foreignKey: 'enrollment_
 
 CourseEnrollmentsModel.hasMany(CourseProgressModel, { foreignKey: 'enrollment_id' });
 CourseProgressModel.belongsTo(CourseEnrollmentsModel, { foreignKey: 'enrollment_id' });
+
+CourseProgressModel.hasOne(CertificateModel, {foreignKey: 'course_progress_id'});
+CertificateModel.belongsTo(CourseProgressModel, {foreignKey: 'course_progress_id'})
 
 CourseProgressModel.hasMany(SectionProgressModel, { foreignKey: 'course_progress_id' });
 SectionProgressModel.belongsTo(CourseProgressModel, { foreignKey: 'course_progress_id' });
