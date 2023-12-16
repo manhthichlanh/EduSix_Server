@@ -589,7 +589,7 @@ export const updateProgress = async (req, res) => {
                         total_duration += lesson.duration;
                     });
                 });
-                await CertificateModel.create({ sub_id, course_proccess_id: course_progress_id, user_id, course_id, total_duration }, { transaction: t })
+                await CertificateModel.create({ sub_id, course_progress_id, user_id, course_id, total_duration }, { transaction: t })
             }
             return res.status(200).json({ message: "Cập nhật tiến độ cho bài học thành công!" });
 
