@@ -6,7 +6,12 @@
         <title>Document</title>
     </head>
     <body>
-        <h1 class="myevent">Hello</h1>
+        <form action="http://localhost:8080/order/create_payment_url" method="post">
+            <input type="text" name="amount" value="10000">
+            <input type="text" name="locale" value="vn">
+            <input type="text"name="bankCode" value="VNBANK">
+            <button type="submit">Thanh toán</button>
+        </form>
     </body>
     <script>
         //  const getOauthGoogleUrl = () => {
