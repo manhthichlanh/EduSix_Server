@@ -1,5 +1,5 @@
+import { ReS } from '../../utils/util.service';
 import FeedBackModel from "../models/feedBack.model";
-import { ReE, ReS } from '../../utils/util.service';
 
 export const getFeedBackByCourse = async (req, res) => {
     try {
@@ -11,31 +11,64 @@ export const getFeedBackByCourse = async (req, res) => {
         });
         return ReS(res, {
             getFeedBackCourse
-          }, 200);
+        }, 200);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 };
 
-export async function createFeedback(req, res, next) {
+export async function createFeedbackRateAndComment(req, res, next) {
     try {
-        const { rate, content } = req.body;
+        const { rate,content } = req.body;
         const user_id = req.params.user_id;
         const course_id = req.params.course_id;
         const createdFeedback = await FeedBackModel.create({
             user_id: user_id,
             course_id: course_id,
-            rate: rate || 5,
-            content: content
+            content:content,
+            rate: rate || 5
         })
         return ReS(res, {
-            createdFeedback 
-          }, 200);
+            createdFeedback
+        }, 200);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 };
-
+export async function createFeedbackRate(req, res, next) {
+    try {
+        const { rate } = req.body;
+        const user_id = req.params.user_id;
+        const course_id = req.params.course_id;
+        const createdFeedback = await FeedBackModel.create({
+            user_id: user_id,
+            course_id: course_id,
+            rate: rate || 5
+        })
+        return ReS(res, {
+            createdFeedback
+        }, 200);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+export async function createFeedbackComment(req, res, next) {
+    try {
+        const { content } = req.body;
+        const user_id = req.params.user_id;
+        const course_id = req.params.course_id;
+        const createdFeedback = await FeedBackModel.create({
+            user_id: user_id,
+            course_id: course_id,
+            content: content
+        })
+        return ReS(res, {
+            createdFeedback
+        }, 200);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
 export async function AverageRate(req, res, next) {
     try {
         const course_id = req.params.course_id;

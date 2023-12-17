@@ -4,7 +4,10 @@ import * as initFeedBack from "../app/controllers/feedBack.controller";
 const router = Router();
 
 export default function initFeedBackRoute(app) {
-    router.post('/:user_id/:course_id',initFeedBack.createFeedback)
+    router.post('/comment/:user_id/:course_id',initFeedBack.createFeedbackComment);
+    router.post('/rate/:user_id/:course_id',initFeedBack.createFeedbackRate);
+    router.post('/:user_id/:course_id',initFeedBack.createFeedbackRateAndComment);
+
     router.get('/:course_id',initFeedBack.getFeedBackByCourse);
     router.get('/averageRate/:course_id',initFeedBack.AverageRate)
     // router.get("/", initLesson.getAllLesson);

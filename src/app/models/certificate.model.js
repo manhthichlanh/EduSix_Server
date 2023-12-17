@@ -10,7 +10,7 @@ const CertificateModel = sequelize.define("certificates", {
   sub_id: {
     type: DataTypes.STRING
   },
-  course_proccess_id: {
+  course_progress_id: {
     type: DataTypes.INTEGER,
   },
   user_id: {
