@@ -13,6 +13,7 @@ import AnswerModel from './answer.model';
 import VideoModel from './video.model';
 import CertificateModel from './certificate.model';
 import OrderModel from './order.model';
+import NotificationModel from './notification.model';
 // Định nghĩa mối quan hệ giữa User và Course
 AdminModel.hasMany(CourseModel, { foreignKey: 'admin_id' });
 CourseModel.belongsTo(AdminModel, { foreignKey: 'admin_id' });

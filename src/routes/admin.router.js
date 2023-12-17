@@ -9,6 +9,7 @@ import initVideoRoute from "./video.route";
 import initAdminQueryRoute from "./admin-query-router";
 import initCertificateRoute from "./certificate.route";
 import initOrderRoute from "./order-router";
+import initNotificationRoute from "./notificattion.router";
 export default function adminRouter(app) {
     initCourseRoute(app)
     initSectionRoute(app)
@@ -21,4 +22,5 @@ export default function adminRouter(app) {
     initAdminQueryRoute(app)
     initCertificateRoute(app)
     initOrderRoute(app)
+    initNotificationRoute(app)
 }

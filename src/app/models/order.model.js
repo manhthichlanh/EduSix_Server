@@ -42,7 +42,7 @@ const OrderModel = sequelize.define("orders", {
     createdAt: "created_at",
 });
 OrderModel.sync().then(() => {
-    console.log('Lesson_progress table created successfully!');
+    console.log('Order table created successfully!');
 }).catch((error) => {
     console.error('Unable to create table : ', error);
 });
