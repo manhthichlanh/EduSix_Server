@@ -521,9 +521,11 @@ export const updateProgress = async (req, res) => {
             });
             if (!s_doc) return res.status(400).json({ message: "Không tìm thấy dữ liệu tương ứng!" })
 
-            const { course_progress_id, section_progresses } = s_doc;
+            const { course_progress_id, section_progresses, progress } = s_doc;
+            if (progress == 1) throw AppError(400, "fail", "Khóa học đã hoàn thành!");
             const { lesson_progresses, section_progress_id } = section_progresses[0];
             const { lesson_progress_id, current, total } = lesson_progresses[0];
+            if (total > 0 && current == total) throw AppError(400, "fail", "Bài học đã hoàn thành!")
             LessonProgressModel.findOne(
                 {
                     where: {
@@ -594,11 +596,9 @@ export const updateProgress = async (req, res) => {
             return res.status(200).json({ message: "Cập nhật tiến độ cho bài học thành công!" });
 
         })
-
-
     } catch (error) {
         console.log(error)
-        return res.status(500).json({ message: error.message });
+        return res.status(error.status ? error.status : 500).json({ message: error.message });
     }
 }
 export const getAllProgressById = async (req, res) => {
