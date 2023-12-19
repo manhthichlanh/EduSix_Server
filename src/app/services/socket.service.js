@@ -1,4 +1,5 @@
 import { switchAction } from "../../utils/util.helper";
+import NotificationModel from "../models/notification.model";
 export default (io) => {
     // console.log(_initEmitter(123))
     // console.log(new )
@@ -64,6 +65,26 @@ export default (io) => {
                 }
             })
 
+        })
+        _initEmitter(socket.id).on("send-certificate-notification", async (certificate) => {
+            const { user_id, sub_id } = certificate;
+            console.log("cóa truy cập")
+            try {
+                const newNotificationCreate = {
+                    link: sub_id,
+                    receiver: user_id,
+                    message: "Chúc mừng bạn đã hoàn thành khóa học",
+                    type: 1,
+                }
+
+                // Tạo thông báo mới trong database
+                const newNotification = await NotificationModel.create(newNotificationCreate);
+
+                socket.emit("learner-get-message", newNotification.toJSON())
+                console.log("thành công!")
+            } catch (error) {
+                console.error('Error creating notification:', error);                
+            }
         })
 
         socket.on("disconnect", function (userSocket) {
