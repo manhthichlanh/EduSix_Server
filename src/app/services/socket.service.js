@@ -67,13 +67,13 @@ export default (io) => {
 
         })
         _initEmitter(socket.id).on("send-certificate-notification", async (certificate) => {
-            const { user_id, sub_id } = certificate;
+            const { user_id, sub_id, course_id } = certificate;
             console.log("cóa truy cập")
             try {
                 const newNotificationCreate = {
-                    link: sub_id,
+                    link: `certification/${sub_id}`,
                     receiver: user_id,
-                    message: "Chúc mừng bạn đã hoàn thành khóa học",
+                    message: "Chúc mừng bạn đã hoàn thành khóa học?course_id="+course_id,
                     type: 1,
                 }
 
