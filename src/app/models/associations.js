@@ -13,6 +13,8 @@ import AnswerModel from './answer.model';
 import VideoModel from './video.model';
 import CertificateModel from './certificate.model';
 import FeedBackModel from './feedBack.model';
+import OrderModel from './order.model';
+import NotificationModel from './notification.model';
 // Định nghĩa mối quan hệ giữa User và Course
 AdminModel.hasMany(CourseModel, { foreignKey: 'admin_id' });
 CourseModel.belongsTo(AdminModel, { foreignKey: 'admin_id' });
@@ -38,6 +40,13 @@ SectionProgressModel.belongsTo(CourseProgressModel, { foreignKey: 'course_progre
 
 SectionProgressModel.hasMany(LessonProgressModel, { foreignKey: 'section_progress_id' });
 LessonProgressModel.belongsTo(SectionProgressModel, { foreignKey: 'section_progress_id' });
+
+CourseModel.hasMany(OrderModel, { foreignKey: 'course_id' });
+CourseEnrollmentsModel.belongsTo(CourseModel, { foreignKey: 'course_id' });
+
+UserModel.hasMany(OrderModel, { foreignKey: 'user_id' });
+OrderModel.belongsTo(UserModel, { foreignKey: 'user_id' });
+
 
 CourseModel.hasMany(CourseEnrollmentsModel, { foreignKey: 'course_id' });
 CourseEnrollmentsModel.belongsTo(CourseModel, { foreignKey: 'course_id' });

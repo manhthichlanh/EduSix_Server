@@ -1,21 +1,6 @@
 import { ReS } from '../../utils/util.service';
 import FeedBackModel from "../models/feedBack.model";
-
-export const getFeedBackByCourse = async (req, res) => {
-    try {
-        const course_id = req.params.course_id;
-        const getFeedBackCourse = await FeedBackModel.findAll({
-            where: {
-                course_id: course_id
-            }
-        });
-        return ReS(res, {
-            getFeedBackCourse
-        }, 200);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-};
+import UserModel from '../models/user.model';
 
 export async function createFeedbackRateAndComment(req, res, next) {
     try {
@@ -35,45 +20,18 @@ export async function createFeedbackRateAndComment(req, res, next) {
         res.status(500).json({ error: error.message });
     }
 };
-export async function createFeedbackRate(req, res, next) {
-    try {
-        const { rate } = req.body;
-        const user_id = req.params.user_id;
-        const course_id = req.params.course_id;
-        const createdFeedback = await FeedBackModel.create({
-            user_id: user_id,
-            course_id: course_id,
-            rate: rate || 5
-        })
-        return ReS(res, {
-            createdFeedback
-        }, 200);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-};
-export async function createFeedbackComment(req, res, next) {
-    try {
-        const { content } = req.body;
-        const user_id = req.params.user_id;
-        const course_id = req.params.course_id;
-        const createdFeedback = await FeedBackModel.create({
-            user_id: user_id,
-            course_id: course_id,
-            content: content
-        })
-        return ReS(res, {
-            createdFeedback
-        }, 200);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-};
+
 export async function AverageRate(req, res, next) {
     try {
         const course_id = req.params.course_id;
         const feedbacks = await FeedBackModel.findAll({
-            where: { course_id: course_id }
+            where: { course_id: course_id },
+            include:[
+                {
+                    model:UserModel
+                }
+            ],
+            order:[['created_at','DESC']]
         });
         if (feedbacks.length === 0) {
             return res.status(404).json({ error: 'No feedback found for the specified course_id' });
