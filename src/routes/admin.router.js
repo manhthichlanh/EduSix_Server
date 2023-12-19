@@ -8,7 +8,9 @@ import initQuizzRoute from "./quizz.route";
 import initVideoRoute from "./video.route";
 import initAdminQueryRoute from "./admin-query-router";
 import initCertificateRoute from "./certificate.route";
+import initFeedBackRoute from "./feedBack.route";
 import initOrderRoute from "./order-router";
+import initNotificationRoute from "./notificattion.router";
 export default function adminRouter(app) {
     initCourseRoute(app)
     initSectionRoute(app)
@@ -20,5 +22,7 @@ export default function adminRouter(app) {
     initQuizzRoute(app)
     initAdminQueryRoute(app)
     initCertificateRoute(app)
+    initFeedBackRoute(app)
     initOrderRoute(app)
+    initNotificationRoute(app)
 }

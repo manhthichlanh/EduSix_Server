@@ -447,13 +447,13 @@ export const userEnrollCourse = async (req, res) => {
     try {
         await sequelize.transaction(async (t) => {
             const existUserEnrollmentCourse = await CourseEnrollmentsModel.findOne({ where: { user_id, course_id } }, { transFaction: t });
-            if (existUserEnrollmentCourse) throw new AppError(400, "fail", "Người dùng đã đăng ký khóa học này")
+            if (existUserEnrollmentCourse) throw new AppError(400, "fail", "Người dùng đã đăng ký khóa học này");
             // const { enrollment_id } = await newCourseEnrollment.toJSON();
             const [createCourseEnrollmentResult, findSectionsResult] = await Promise.all([
                 CourseEnrollmentsModel.create({ user_id, course_id }, { transaction: t }),
                 // CourseProgressModel.create({ course_id, enrollment_id, progress: 0, is_finish: false }, { transaction: t }),
                 SectionModel.findAll({ where: { course_id } })
-            ])
+            ]);
             const enrollment_Json = createCourseEnrollmentResult.toJSON();
             const sectionsJSON = findSectionsResult.map(section => section.toJSON());
             // const { enrollment_id } = await createCourseEnrollmentResult.toJSON();
@@ -490,11 +490,11 @@ export const userEnrollCourse = async (req, res) => {
                     section.total = countLesson;
                     await section.save({ transaction: t })
                 })
-            )
-            return res.status(200).json({ message: "Đăng ký khóa học thành công", user_id: user_id, course_id: course_id })
+            );
+            return res.status(200).json({ message: "Đăng ký khóa học thành công", user_id: user_id, course_id: course_id });
         })
     } catch (error) {
-        return res.status(error.statusCode ? error.statusCode : 500).json(error.message)
+        return res.status(error.statusCode ? error.statusCode : 500).json(error.message);
     }
 }
 export const updateProgress = async (req, res) => {
@@ -592,7 +592,11 @@ export const updateProgress = async (req, res) => {
                         total_duration += lesson.duration;
                     });
                 });
-                await CertificateModel.create({ sub_id, course_progress_id, user_id, course_id, total_duration }, { transaction: t })
+                const certificate_doc = await CertificateModel.create({ sub_id, course_progress_id, user_id, course_id, total_duration }, { transaction: t });
+                const socketID = req.headers["socket-id"];
+                if (socketID) {
+                    _initEmitter(socketID).emit("send-certificate-notification", certificate_doc?.toJSON())
+                }
             }
             return res.status(200).json({ message: "Cập nhật tiến độ cho bài học thành công!" });
 

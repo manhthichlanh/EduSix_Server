@@ -83,7 +83,7 @@ export const updateFieldsUser = async (req, res) => {
     const user_id = req.params.user_id;
     const updateFields = req.body;
     const updateObj = {};
-    for (const [key,value] of Object.entries(updateFields) ) {
+    for (const [key, value] of Object.entries(updateFields)) {
         updateObj[`${key}`] = value
     }
     const uploadedFile = req.file;
@@ -93,33 +93,39 @@ export const updateFieldsUser = async (req, res) => {
         if (!existUser) return res.status(400).json({ message: "Không tìm thấy người dùng có id tương ứng!" });
         await sequelize.transaction(async (t) => {
             if (updateObj.current_password && updateObj.new_password) {
-                const is_correct_password = await verifyPassword(updateObj.current_password,existUser.password);
-                if (!is_correct_password) return res.status(400).json({message: "Sai mật khẩu"});
-                
+                const is_correct_password = await verifyPassword(updateObj.current_password, existUser.password);
+                if (!is_correct_password) return res.status(400).json({ message: "Sai mật khẩu" });
+
                 const hashpassword = await generatePassword(updateObj.new_password);
                 updateObj.password = hashpassword;
                 delete updateObj.current_password
                 delete updateObj.new_password
-            
+
             } else if (uploadedFile) {
                 const fileName = Date.now() + '-' + uploadedFile.originalname.toLowerCase().split(" ").map(item => item.trim()).join("");
                 if (existUser.avatar) {
-                    const oldPath = filePath(existUser.avatar);
-                    try {
-                        fs.exists(oldPath, async (exist) => {
-                            console.log(exist)
-                            if (!exist) {
-                              await fs.promises.writeFile(uploadDir, uploadedFile?.buffer);
-                            } else {
-                              const newPath = filePath(fileName)
-                              await fs.promises.writeFile(oldPath, uploadedFile?.buffer);
-                              await fs.promises.rename(oldPath, newPath);
+                    if (existUser.avatar.includes("https://")) {
+                        await fs.promises.writeFile(filePath(fileName), uploadedFile?.buffer);
+                        updateObj.avatar = fileName;
+                    } 
+                    else {
+                        const oldPath = filePath(existUser.avatar);
+                        try {
+                            fs.exists(oldPath, async (exist) => {
+                                console.log(exist)
+                                if (!exist) {
+                                    await fs.promises.writeFile(filePath(fileName), uploadedFile?.buffer);
+                                } else {
+                                    const newPath = filePath(fileName)
+                                    await fs.promises.writeFile(oldPath, uploadedFile?.buffer);
+                                    await fs.promises.rename(oldPath, newPath);
+                                }
                             }
-                          }
-                          )
-                          updateObj.avatar = fileName;
-                    } catch (error) {
-                        console.log({error})
+                            )
+                            updateObj.avatar = fileName;
+                        } catch (error) {
+                            console.log({ error })
+                        }
                     }
                 } else {
                     const newPath = filePath(fileName)
@@ -127,8 +133,7 @@ export const updateFieldsUser = async (req, res) => {
                     updateObj.avatar = fileName;
                 }
             }
-            await  existUser.update(updateObj, {transaction: t});
-               
+            await existUser.update(updateObj, { transaction: t });
             return res.json({ message: 'User updated successfully' });
         })
     } catch (error) {
