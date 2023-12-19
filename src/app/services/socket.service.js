@@ -81,6 +81,8 @@ export default (io) => {
                 const newNotification = await NotificationModel.create(newNotificationCreate);
 
                 socket.emit("learner-get-message", newNotification.toJSON())
+                socket.emit("learner-get-certificate-message", newNotification.toJSON())
+
                 console.log("thành công!")
             } catch (error) {
                 console.error('Error creating notification:', error);                
