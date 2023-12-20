@@ -8,12 +8,14 @@ import sequelize from "../models/db";
 import { Op, where } from 'sequelize';
 import { ReE, ReS } from '../../utils/util.service';
 import { generateRandomNumberWithRandomDigits, getAndDeleteHLSFile, generateRandomString } from "../../utils/util.helper";
+import UserModel from "../models/user.model"
 import CourseModel from "../models/course.model";
 import CourseEnrollmentsModel from "../models/courseEnrollment.model";
 import CourseProgressModel from "../models/courseProgress.model";
 import SectionProgressModel from "../models/sectionProgress.model";
 import LessonProgressModel from "../models/lessonProgress.model";
 import CertificateModel from "../models/certificate.model";
+import OrderModel from "../models/order.model";
 export const createLessonWithVideo = async (req, res, next) => {
     const { section_id, name, content, lesson_type, file_videos, youtube_id, duration, video_type } = req.body;
     const uploadedFile = req.file;
@@ -685,7 +687,70 @@ export const searchCourse = async (req, res) => {
     })
     return res.status(200).json(course_doc);
 }
+export const generalAnalytic1 = async (req, res) => {
+    try {
+        const [countCourse, countUser, totalRevenue] = await Promise.all(
+            [
+                CourseModel.count(),
+                UserModel.count(),
+                OrderModel.sum('price')
+            ]
+        )
+        return res.status(200).json({ countCourse, countUser, totalRevenue })
+    } catch (error) {
+        return res.status(500).json({ message: error.message })
+    }
+}
+export const countAllCourse = async (req, res) => {
+    try {
+        const course_doc = await CourseModel.findAll({
+            include: [
+                {
+                    model: SectionModel,
+                    include: [
+                        {
+                            model: LessonModel,
+                            include: [
+                                { model: VideoModel },
+                                { model: QuizzModel },
+                            ],
+                        },
+                    ],
+                },
+            ],
+        });
+        let totalCourse = course_doc && course_doc?.length > 0? course_doc.length : 0;
+        let totalLessons = 0;
+        let totalSections = 0;
+        let totalQuizzLessons = 0;
+        let totalVideoLessons = 0;
 
+        course_doc.forEach((course) => {
+            course.sections.forEach((section) => {
+                totalSections++;
+
+                section.lessons.forEach((lesson) => {
+                    totalLessons++;
+
+                    if (lesson.type === 1) {
+                        // Bài học chứa quizz
+                        totalQuizzLessons++;
+                    } else if (lesson.type === 2) {
+                        // Bài học chứa video
+                        totalVideoLessons++;
+                    }
+
+                    // Nếu bạn muốn kiểm tra các bài học có chứa VideoModel hay QuizzModel, bạn có thể kiểm tra mảng `lesson.Videos` và `lesson.Quizzes` tương ứng.
+                });
+            });
+        });
+        return res.status(200).json({ totalCourse, totalLessons, totalSections, totalQuizzLessons, totalVideoLessons })
+    } catch (error) {
+        return res.status(500).json({ message: error.message })
+    }
+}
+
+// export const
 // export async function getAllLessonQuizzVideo(req, res, next) {
 //     try {
 //         const section_id = req.params.section_id;
