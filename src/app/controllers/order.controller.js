@@ -30,8 +30,14 @@ const transactionStatus = {
     "09": "GD Hoàn trả bị từ chối",
 };
 export const createPaymentUrl = async (req, res) => {
+    
     process.env.TZ = 'Asia/Ho_Chi_Minh';
     const { amount, bankCode, language: locale, user_id, course_id, } = req.body;
+    console.log("Dữ liệu nhận được:", req.body);
+
+    if (!user_id || !course_id || !amount) {
+        return res.status(400).json({ message: "user_id hoặc course_id bị thiếu" });
+      }
     const existOrder = await OrderModel.findOne({ where: { user_id, course_id } });
     if (existOrder) return res.status(400).json({ message: "User đã thanh toán khóa học này" })
     let date = new Date();
@@ -78,9 +84,9 @@ export const createPaymentUrl = async (req, res) => {
     const hmac = createHmac("sha512", secretKey);
     const signed = hmac.update(new Buffer(signData, 'utf-8')).digest("hex");
     vnp_Params['vnp_SecureHash'] = signed;
-    vnpUrl += '?' + stringify(vnp_Params, { encode: false });
+    vnpUrl += '?' + stringify(vnp_Params, { encode: false }); 
     console.log(vnpUrl)
-    return res.redirect(vnpUrl)
+    return res.status(200).json({paymentUrl: vnpUrl})
 }
 export const vnpayReturn = async (req, res) => {
     try {
@@ -113,6 +119,7 @@ export const vnpayReturn = async (req, res) => {
             for (const [key, value] of Object.entries(transactionStatus)) {
                 if (key == transaction_status) transaction_status_message = value
             }
+            
             const createNewOrder = {
                 user_id,
                 course_id,
@@ -126,7 +133,7 @@ export const vnpayReturn = async (req, res) => {
             }
             //Đây là host của đối tượng truy cập api 
             await OrderModel.create(createNewOrder)
-            return res.status(200).json({ message: transaction_status })
+            return res.redirect(`http://localhost:5173/course-detail?courseId=${course_id}`);
         } else {
             throw new AppError(500, "fail", "Mã checksum không khớp!")
         }
@@ -134,3 +141,18 @@ export const vnpayReturn = async (req, res) => {
         return res.status(500).json({ message: error.message })
     }
 }
+export const checkUserPurchase = async (req, res) => {
+    try {
+      const { user_id, course_id } = req.params;
+  
+      const order = await OrderModel.findOne({
+        where: { user_id, course_id, transaction_status: "Giao dịch thành công" }
+      });
+  
+      const hasPurchased = order != null;
+      res.status(200).json({ hasPurchased });
+    } catch (error) {
+      console.error('Error checking user purchase:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  };
