@@ -16,6 +16,8 @@ import SectionProgressModel from "../models/sectionProgress.model";
 import LessonProgressModel from "../models/lessonProgress.model";
 import CertificateModel from "../models/certificate.model";
 import OrderModel from "../models/order.model";
+import CategoryModel from "../models/category.model";
+import { model } from "mongoose";
 export const createLessonWithVideo = async (req, res, next) => {
     const { section_id, name, content, lesson_type, file_videos, youtube_id, duration, video_type } = req.body;
     const uploadedFile = req.file;
@@ -719,7 +721,7 @@ export const countAllCourse = async (req, res) => {
                 },
             ],
         });
-        let totalCourse = course_doc && course_doc?.length > 0? course_doc.length : 0;
+        let totalCourse = course_doc && course_doc?.length > 0 ? course_doc.length : 0;
         let totalLessons = 0;
         let totalSections = 0;
         let totalQuizzLessons = 0;
@@ -748,6 +750,101 @@ export const countAllCourse = async (req, res) => {
     } catch (error) {
         return res.status(500).json({ message: error.message })
     }
+}
+export const analyticCategory = async (req, res) => {
+    try {
+        const courseDoc = await CourseModel.findAll({
+            attributes: [
+                'category_id',
+                [sequelize.fn('COUNT', sequelize.col('course_id')), 'totalCourses']
+            ],
+            group: ['category_id'],
+            include: [{
+                model: CategoryModel, // Tham gia bảng CategoryModel
+                attributes: ['cate_name'], // Chọn các trường cần hiển thị từ bảng CategoryModel
+            }],
+            raw: true,
+            order: sequelize.literal('totalCourses DESC'), // Sắp xếp theo số lượng khóa học giảm dần
+        })
+        const category_Name = courseDoc.map((row) => row['categories.cate_name']);
+        const data = courseDoc.map((row) => row.totalCourses);
+
+        // In ra kết quả
+        console.log('category_Name:', category_Name);
+        console.log('data:', data);
+        return res.status(200).json({
+            cate_name: category_Name,
+            data
+        })
+    } catch (error) {
+        return res.status(500).json({ message: error.message })
+    }
+    // CourseModel.findAll({
+    //     attributes: [
+    //         'category_id',
+    //         [sequelize.fn('COUNT', sequelize.col('course_id')), 'totalCourses']
+    //     ],
+    //     group: ['category_id'],
+    //     include: [{
+    //         model: CategoryModel, // Tham gia bảng CategoryModel
+    //         attributes: ['cate_name'], // Chọn các trường cần hiển thị từ bảng CategoryModel
+    //     }],
+    //     raw: true,
+    //     order: sequelize.literal('totalCourses DESC'), // Sắp xếp theo số lượng khóa học giảm dần
+    // }).then((result) => {
+    //     console.log(result)
+    //     // Tách dữ liệu thành hai mảng
+    //     const category_Name = result.map((row) => row['categories.cate_name']);
+    //     const data = result.map((row) => row.totalCourses);
+
+    //     // In ra kết quả
+    //     console.log('category_Name:', category_Name);
+    //     console.log('data:', data);
+    // }).catch((error) => {
+    //     console.error('Error querying database:', error);
+    // });;
+}
+export const analyticRevenue = async (req, res) => {
+    try {
+        const orderAndCourseAndCategory = await OrderModel.findAll({
+            attributes: [
+                'order_id',
+                'user_id',
+                'course_id',
+                'price',
+                'order_date',
+                'created_at',
+                // Thêm cột tính toán cho phần trăm
+                [
+                    sequelize.literal('price / SUM(price) OVER () * 100'),
+                    'percent',
+                ],
+            ],
+            include: [
+                {
+                    model: CourseModel,
+                    attributes: [
+                        'course_id',
+                        'category_id'
+                    ],
+                    include: [
+                        {
+                            model: CategoryModel,
+                            attributes: [
+                                `cate_name`
+                            ]
+                        },
+                    ],
+                },
+            ],
+            group: ['order_id'],
+            raw: true,
+        });
+        return res.status(200).json(orderAndCourseAndCategory)
+    } catch (error) {
+        return res.status(500).json({ message: error.message })
+    }
+
 }
 
 // export const

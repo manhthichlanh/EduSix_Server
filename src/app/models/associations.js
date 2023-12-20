@@ -41,7 +41,7 @@ SectionProgressModel.hasMany(LessonProgressModel, { foreignKey: 'section_progres
 LessonProgressModel.belongsTo(SectionProgressModel, { foreignKey: 'section_progress_id' });
 
 CourseModel.hasMany(OrderModel, { foreignKey: 'course_id' });
-CourseEnrollmentsModel.belongsTo(CourseModel, { foreignKey: 'course_id' });
+OrderModel.belongsTo(CourseModel, { foreignKey: 'course_id' });
 
 UserModel.hasMany(OrderModel, { foreignKey: 'user_id' });
 OrderModel.belongsTo(UserModel, { foreignKey: 'user_id' });
@@ -52,7 +52,7 @@ CourseEnrollmentsModel.belongsTo(CourseModel, { foreignKey: 'course_id' });
 
 // Định nghĩa mối quan hệ giữa Category và Course
 CategoryModel.hasMany(CourseModel, { foreignKey: 'category_id'});
-CourseModel.hasMany(CategoryModel, { foreignKey: 'category_id'});
+CourseModel.belongsTo(CategoryModel, { foreignKey: 'category_id'});
 
 // Định nghĩa mối quan hệ giữa Course và Section
 CourseModel.hasMany(SectionModel, { foreignKey: 'course_id' });

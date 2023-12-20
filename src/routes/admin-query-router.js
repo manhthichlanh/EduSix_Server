@@ -23,6 +23,8 @@ export default function initAdminQueryRoute(app) {
     router.get("/searchCourse/:searchKey", initAdminQuery.searchCourse)
     router.get("/general/analytic1", initAdminQuery.generalAnalytic1)
     router.get("/general/countAllCourse", initAdminQuery.countAllCourse)
+    router.get("/general/analyticCategory", initAdminQuery.analyticCategory)
+    router.get("/general/analyticRevenue", initAdminQuery.analyticRevenue)
     // router.post("/updateQuizz/:id", initQuizz.updateQuizz);
     // router.delete("/deleteQuizzById/:id", initQuizz.deleteQuizzById);
     // //router client
