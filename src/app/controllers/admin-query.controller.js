@@ -766,7 +766,7 @@ export const analyticCategory = async (req, res) => {
             raw: true,
             order: sequelize.literal('totalCourses DESC'), // Sắp xếp theo số lượng khóa học giảm dần
         })
-        const category_Name = courseDoc.map((row) => row['categories.cate_name']);
+        const category_Name = courseDoc.map((row) => row['category.cate_name']);
         const data = courseDoc.map((row) => row.totalCourses);
 
         // In ra kết quả
