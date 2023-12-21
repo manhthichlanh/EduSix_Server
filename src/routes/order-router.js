@@ -6,6 +6,7 @@ export default function initOrderRoute(app) {
     router.post("/create_payment_url", initOrder.createPaymentUrl)
     router.get("/vnpay_return/:user_id/:course_id/", initOrder.vnpayReturn)
     router.get('/check-purchase/:user_id/:course_id', initOrder.checkUserPurchase);
-
+    router.get("/export-payment", initOrder.exportAllData)
+    router.get("/export-payment/:user_id", initOrder.getOrdersByUserId)
     app.use("/order", router);
 }

@@ -4,6 +4,15 @@ import { createHmac } from "crypto";
 import OrderModel from "../models/order.model";
 import sequelize from "../models/db";
 import AppError from "../../utils/appError";
+export const exportAllData = async (req, res) => {
+    try {
+        const data = await OrderModel.findAll(); // Replace YourModel with your actual model
+        res.status(200).json(data);
+    } catch (error) {
+        console.error('Error exporting data:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+};
 function sortObject(obj) {
     let sorted = {};
     let str = [];
@@ -156,3 +165,16 @@ export const checkUserPurchase = async (req, res) => {
       res.status(500).json({ message: 'Internal server error' });
     }
   };
+  export const getOrdersByUserId = async (req, res) => {
+    try {
+        const userId = req.params.user_id;
+        const orders = await OrderModel.findAll({ where: { user_id: userId } });
+        if (orders.length === 0) {
+            return res.status(404).json({ message: 'No orders found for this user' });
+        }
+        res.status(200).json(orders);
+    } catch (error) {
+        console.error('Error retrieving orders:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+};
