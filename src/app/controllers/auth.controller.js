@@ -14,6 +14,15 @@ import { getGoogleUser, getGoogleUserInfo, getOauthGooleToken } from '../../util
 import { getFacebookUser, getOauthFacebookToken } from '../../utils/facebookAPI';
 const privateKey = readFileSync("SSL/private-key.txt", "utf-8");
 const publicKey = readFileSync("SSL/public-key.txt", "utf-8");
+export const getAllUser = async (req, res) => {
+    try {
+        const nhanvien = await AdminModel.findAll();
+        res.json(nhanvien)
+    } catch (error) {
+        console.log(error);
+        res.sendStatus(501)
+    }
+}
 export const generatePassword = (password) => {
     return new Promise((resolve, reject) => {
         const saltRounds = 10; // Số lượng vòng lặp băm (tăng độ an toàn)
