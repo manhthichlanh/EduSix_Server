@@ -1,26 +1,22 @@
-import { Sequelize, DataTypes } from "sequelize";
-import dbConfig from "../configs/db.config.js";
+'use strict';
+import CONFIG from '../configs/db.config.js';
 
-const sequelize = new Sequelize(dbConfig.DB, dbConfig.USER, dbConfig.PASSWORD, {
-    host: dbConfig.HOST,
-    dialect: dbConfig.dialect,
+import { Sequelize, DataTypes } from 'sequelize';
+// const db = {};
+console.log('CONFIG---', CONFIG);
+
+const sequelize = new Sequelize(CONFIG.db_name, CONFIG.db_user, CONFIG.db_password, {
+    host: CONFIG.db_host,
+    dialect: CONFIG.db_dialect,
+    port: CONFIG.db_port,
     operatorsAliases: false,
-
-    pool: {
-        max: dbConfig.pool.max,
-        min: dbConfig.pool.min,
-        acquire: dbConfig.pool.acquire,
-        idle: dbConfig.pool.idle
-    }
+    dialectOptions: {
+        // useUTC: false, //for reading from the database
+        dateStrings: true,
+        typeCast: true,
+        timezone: '+07:00'
+    },
+    timezone: '+07:00', //for writing to the database
+    logging: false
 });
-
-async function connectDB() {
-    try {
-        await sequelize.authenticate();
-        console.log("✅ Connection has been established successfully.");
-    } catch (error) {
-        console.error("Unable to connect to the database:", error);
-    }
-}
-
-export { connectDB, sequelize, Sequelize, DataTypes };
+export default sequelize;

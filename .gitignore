@@ -1,2 +1,13 @@
-node_modules
+node_modules/
+.env
+test.json
+socketIniter.js
 package-lock.json
+package.json
+public/videos/*
+public/images/*
+*.env
+package-lock.json
+server.js
+test.html
+test.js

@@ -4,3 +4,12 @@
 - Phần code push lên hãy mô tả như sau *"Tên_các-task-đã-thực-hiên"*;
 - Chỉ làm việc trên nhánh develop (để phát triển ứng dụng) và hotfix (Để sửa các lỗi);
 - Tuyệt đối không được push code lên nhánh main khi chưa được sự đồng ý của nhóm trưởng (tránh ứng dụng bị lỗi toàn cục);
+- Tên database: edusix, password: ""
+- API :
+   
+    + Get
+    + Create :
+    + Update
+    + Delete
+    => try catch aync await
+- git push không được có thể có rất nhiều lỗi khác nhau
