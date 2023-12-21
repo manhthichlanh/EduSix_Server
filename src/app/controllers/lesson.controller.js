@@ -1,4 +1,5 @@
 import LessonModel from "../models/lesson.model";
+import SectionModel from "../models/section.model";
 export const createLesson = async (req, res) => {
     try {
         const newRecord = await LessonModel.create(req.body);
@@ -43,6 +44,19 @@ export const getLessonBySectionId = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 }
+export const getLessonBySectionId1 = async (req, res) => {
+    const sectionId = req.params.sectionId;
+    try {
+        const record = await LessonModel.findOne({ where: { section_id: sectionId } });
+        if (!record) {
+            res.status(404).json({ error: 'Record not found' });
+        } else {
+            res.status(200).json(record);
+        }
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+}
 
 export const updateLesson = async (req, res) => {
     try {
@@ -71,3 +85,4 @@ export const deleteLesson = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 };
+
