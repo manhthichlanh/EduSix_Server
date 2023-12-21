@@ -599,6 +599,7 @@ export const updateProgress = async (req, res) => {
                 const certificate_doc = await CertificateModel.create({ sub_id, course_progress_id, user_id, course_id, total_duration }, { transaction: t });
                 const socketID = req.headers["socket-id"];
                 if (socketID) {
+                    console.log("bắt đầu socket")
                     _initEmitter(socketID).emit("send-certificate-notification", certificate_doc?.toJSON())
                 }
             }
