@@ -4,6 +4,15 @@ import { createHmac } from "crypto";
 import OrderModel from "../models/order.model";
 import sequelize from "../models/db";
 import AppError from "../../utils/appError";
+export const exportAllData = async (req, res) => {
+    try {
+        const data = await OrderModel.findAll(); // Replace YourModel with your actual model
+        res.status(200).json(data);
+    } catch (error) {
+        console.error('Error exporting data:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+};
 function sortObject(obj) {
     let sorted = {};
     let str = [];
