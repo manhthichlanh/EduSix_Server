@@ -8,12 +8,16 @@ import sequelize from "../models/db";
 import { Op, where } from 'sequelize';
 import { ReE, ReS } from '../../utils/util.service';
 import { generateRandomNumberWithRandomDigits, getAndDeleteHLSFile, generateRandomString } from "../../utils/util.helper";
+import UserModel from "../models/user.model"
 import CourseModel from "../models/course.model";
 import CourseEnrollmentsModel from "../models/courseEnrollment.model";
 import CourseProgressModel from "../models/courseProgress.model";
 import SectionProgressModel from "../models/sectionProgress.model";
 import LessonProgressModel from "../models/lessonProgress.model";
 import CertificateModel from "../models/certificate.model";
+import OrderModel from "../models/order.model";
+import CategoryModel from "../models/category.model";
+import { model } from "mongoose";
 export const createLessonWithVideo = async (req, res, next) => {
     const { section_id, name, content, lesson_type, file_videos, youtube_id, duration, video_type } = req.body;
     const uploadedFile = req.file;
@@ -684,7 +688,165 @@ export const searchCourse = async (req, res) => {
     })
     return res.status(200).json(course_doc);
 }
+export const generalAnalytic1 = async (req, res) => {
+    try {
+        const [countCourse, countUser, totalRevenue] = await Promise.all(
+            [
+                CourseModel.count(),
+                UserModel.count(),
+                OrderModel.sum('price')
+            ]
+        )
+        return res.status(200).json({ countCourse, countUser, totalRevenue })
+    } catch (error) {
+        return res.status(500).json({ message: error.message })
+    }
+}
+export const countAllCourse = async (req, res) => {
+    try {
+        const course_doc = await CourseModel.findAll({
+            include: [
+                {
+                    model: SectionModel,
+                    include: [
+                        {
+                            model: LessonModel,
+                            include: [
+                                { model: VideoModel },
+                                { model: QuizzModel },
+                            ],
+                        },
+                    ],
+                },
+            ],
+        });
+        let totalCourse = course_doc && course_doc?.length > 0 ? course_doc.length : 0;
+        let totalLessons = 0;
+        let totalSections = 0;
+        let totalQuizzLessons = 0;
+        let totalVideoLessons = 0;
 
+        course_doc.forEach((course) => {
+            course.sections.forEach((section) => {
+                totalSections++;
+
+                section.lessons.forEach((lesson) => {
+                    totalLessons++;
+
+                    if (lesson.type === 1) {
+                        // Bài học chứa quizz
+                        totalQuizzLessons++;
+                    } else if (lesson.type === 2) {
+                        // Bài học chứa video
+                        totalVideoLessons++;
+                    }
+
+                    // Nếu bạn muốn kiểm tra các bài học có chứa VideoModel hay QuizzModel, bạn có thể kiểm tra mảng `lesson.Videos` và `lesson.Quizzes` tương ứng.
+                });
+            });
+        });
+        return res.status(200).json({ totalCourse, totalLessons, totalSections, totalQuizzLessons, totalVideoLessons })
+    } catch (error) {
+        return res.status(500).json({ message: error.message })
+    }
+}
+export const analyticCategory = async (req, res) => {
+    try {
+        const courseDoc = await CourseModel.findAll({
+            attributes: [
+                'category_id',
+                [sequelize.fn('COUNT', sequelize.col('course_id')), 'totalCourses']
+            ],
+            group: ['category_id'],
+            include: [{
+                model: CategoryModel, // Tham gia bảng CategoryModel
+                attributes: ['cate_name'], // Chọn các trường cần hiển thị từ bảng CategoryModel
+            }],
+            raw: true,
+            order: sequelize.literal('totalCourses DESC'), // Sắp xếp theo số lượng khóa học giảm dần
+        })
+        const category_Name = courseDoc.map((row) => row['category.cate_name']);
+        const data = courseDoc.map((row) => row.totalCourses);
+
+        // In ra kết quả
+        console.log('category_Name:', category_Name);
+        console.log('data:', data);
+        return res.status(200).json({
+            cate_name: category_Name,
+            data
+        })
+    } catch (error) {
+        return res.status(500).json({ message: error.message })
+    }
+    // CourseModel.findAll({
+    //     attributes: [
+    //         'category_id',
+    //         [sequelize.fn('COUNT', sequelize.col('course_id')), 'totalCourses']
+    //     ],
+    //     group: ['category_id'],
+    //     include: [{
+    //         model: CategoryModel, // Tham gia bảng CategoryModel
+    //         attributes: ['cate_name'], // Chọn các trường cần hiển thị từ bảng CategoryModel
+    //     }],
+    //     raw: true,
+    //     order: sequelize.literal('totalCourses DESC'), // Sắp xếp theo số lượng khóa học giảm dần
+    // }).then((result) => {
+    //     console.log(result)
+    //     // Tách dữ liệu thành hai mảng
+    //     const category_Name = result.map((row) => row['categories.cate_name']);
+    //     const data = result.map((row) => row.totalCourses);
+
+    //     // In ra kết quả
+    //     console.log('category_Name:', category_Name);
+    //     console.log('data:', data);
+    // }).catch((error) => {
+    //     console.error('Error querying database:', error);
+    // });;
+}
+export const analyticRevenue = async (req, res) => {
+    try {
+        const orderAndCourseAndCategory = await OrderModel.findAll({
+            attributes: [
+                'order_id',
+                'user_id',
+                'course_id',
+                'price',
+                'order_date',
+                'created_at',
+                // Thêm cột tính toán cho phần trăm
+                [
+                    sequelize.literal('price / SUM(price) OVER () * 100'),
+                    'percent',
+                ],
+            ],
+            include: [
+                {
+                    model: CourseModel,
+                    attributes: [
+                        'course_id',
+                        'category_id'
+                    ],
+                    include: [
+                        {
+                            model: CategoryModel,
+                            attributes: [
+                                `cate_name`
+                            ]
+                        },
+                    ],
+                },
+            ],
+            group: ['order_id'],
+            raw: true,
+        });
+        return res.status(200).json(orderAndCourseAndCategory)
+    } catch (error) {
+        return res.status(500).json({ message: error.message })
+    }
+
+}
+
+// export const
 // export async function getAllLessonQuizzVideo(req, res, next) {
 //     try {
 //         const section_id = req.params.section_id;
