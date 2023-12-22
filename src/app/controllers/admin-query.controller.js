@@ -847,6 +847,26 @@ export const analyticRevenue = async (req, res) => {
     }
 
 }
+export const analyticGeneralCourse = async (req, res) => {
+    try {
+        const course_doc = await CourseModel.findAll({include: [
+            {
+                model: SectionModel,
+                include: [
+                    {
+                        model: {
+                            LessonModel
+                        }
+                    }
+                ]
+            }
+        ]})
+        return res.json(course_doc)
+    } catch (error) {
+        return res.status(500).json({message: error.message})
+    }
+
+}
 
 // export const
 // export async function getAllLessonQuizzVideo(req, res, next) {

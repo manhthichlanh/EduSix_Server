@@ -1,5 +1,7 @@
 import { switchAction } from "../../utils/util.helper";
 import NotificationModel from "../models/notification.model";
+const onlineUsers = new Set();
+
 export default (io) => {
     // console.log(_initEmitter(123))
     // console.log(new )
@@ -22,6 +24,11 @@ export default (io) => {
         console.log("Có người kết nối", socket.id);
 
         console.log("socketSide id:" + socket.id)
+        socket.on("client-connect", () => {
+            onlineUsers.add(socket.id);
+            console.log("hello")
+        })               
+        io.emit('online-users', Array.from(onlineUsers));
 
         _initEmitter(socket.id).on("init_ffmpeg_command", (command) => {
             console.log("cóa")
@@ -93,6 +100,7 @@ export default (io) => {
 
         socket.on("disconnect", function (userSocket) {
             console.log(`User: ${userSocket.id} ngắt kết nối`)
+            onlineUsers.delete(socket.id);
         });
     })
 }
