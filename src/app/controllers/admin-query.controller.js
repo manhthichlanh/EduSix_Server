@@ -598,6 +598,7 @@ export const updateProgress = async (req, res) => {
                 const certificate_doc = await CertificateModel.create({ sub_id, course_progress_id, user_id, course_id, total_duration }, { transaction: t });
                 const socketID = req.headers["socket-id"];
                 if (socketID) {
+                    console.log("bắt đầu socket")
                     _initEmitter(socketID).emit("send-certificate-notification", certificate_doc?.toJSON())
                 }
             }
@@ -842,6 +843,26 @@ export const analyticRevenue = async (req, res) => {
         return res.status(200).json(orderAndCourseAndCategory)
     } catch (error) {
         return res.status(500).json({ message: error.message })
+    }
+
+}
+export const analyticGeneralCourse = async (req, res) => {
+    try {
+        const course_doc = await CourseModel.findAll({include: [
+            {
+                model: SectionModel,
+                include: [
+                    {
+                        model: {
+                            LessonModel
+                        }
+                    }
+                ]
+            }
+        ]})
+        return res.json(course_doc)
+    } catch (error) {
+        return res.status(500).json({message: error.message})
     }
 
 }

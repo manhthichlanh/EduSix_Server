@@ -1,5 +1,7 @@
 import { switchAction } from "../../utils/util.helper";
 import NotificationModel from "../models/notification.model";
+const onlineUsers = new Set();
+
 export default (io) => {
     // console.log(_initEmitter(123))
     // console.log(new )
@@ -22,6 +24,12 @@ export default (io) => {
         console.log("Có người kết nối", socket.id);
 
         console.log("socketSide id:" + socket.id)
+        socket.on("client-connect", () => {
+            onlineUsers.add(socket.id);
+            console.log("hello")
+        })               
+        io.emit('online-users', Array.from(onlineUsers));
+
         _initEmitter(socket.id).on("init_ffmpeg_command", (command) => {
             console.log("cóa")
             const selectedAction = switchAction(command);
@@ -66,6 +74,7 @@ export default (io) => {
             })
 
         })
+
         _initEmitter(socket.id).on("send-certificate-notification", async (certificate) => {
             const { user_id, sub_id, course_id } = certificate;
             console.log("cóa truy cập")
@@ -73,24 +82,25 @@ export default (io) => {
                 const newNotificationCreate = {
                     link: `certification/${sub_id}`,
                     receiver: user_id,
-                    message: "Chúc mừng bạn đã hoàn thành khóa học?course_id="+course_id,
+                    message: "Chúc mừng bạn đã hoàn thành khóa học?course_id=" + course_id,
                     type: 1,
                 }
 
                 // Tạo thông báo mới trong database
                 const newNotification = await NotificationModel.create(newNotificationCreate);
 
-                socket.emit("learner-get-message", newNotification.toJSON())
+                socket.emit("learner-get-message", { readLoad: true })
                 socket.emit("learner-get-certificate-message", newNotification.toJSON())
 
                 console.log("thành công!")
             } catch (error) {
-                console.error('Error creating notification:', error);                
+                console.error('Error creating notification:', error);
             }
         })
 
         socket.on("disconnect", function (userSocket) {
             console.log(`User: ${userSocket.id} ngắt kết nối`)
+            onlineUsers.delete(socket.id);
         });
     })
 }

@@ -5,6 +5,7 @@ import * as initAuth from "../app/controllers/auth.controller"
 export default function initUserRoute(app) {
 
     router.post("/login", initAuth.loginUser)
+    router.get("/", initAuth.getAllUser)
     router.post("/login/admin", initAuth.loginAdmin)
     router.post("/register", initAuth.createUser)
     router.post("/user/create", initAuth.createUser)
