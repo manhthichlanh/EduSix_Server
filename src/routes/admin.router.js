@@ -10,6 +10,7 @@ import initAdminQueryRoute from "./admin-query-router";
 import initCertificateRoute from "./certificate.route";
 import initOrderRoute from "./order-router";
 import initNotificationRoute from "./notificattion.router";
+import initBannerRoute from "./banner.router";
 export default function adminRouter(app) {
     initCourseRoute(app)
     initSectionRoute(app)
@@ -23,4 +24,5 @@ export default function adminRouter(app) {
     initCertificateRoute(app)
     initOrderRoute(app)
     initNotificationRoute(app)
+    initBannerRoute(app)
 }
