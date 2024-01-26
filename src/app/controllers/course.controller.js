@@ -60,7 +60,9 @@ export const createCourse = async (req, res) => {
 };
 export const getAllCourse = async (req, res) => {
     try {
-        const courseRecord = await CourseModel.findAll();
+        const courseRecord = await CourseModel.findAll({
+            order: [['course_id', 'DESC']],
+        });
 
         const newCourses = await Promise.all(
             courseRecord.map(async (item) => {

@@ -1,3 +1,5 @@
+import path from 'path';
+import fs from 'fs/promises';
 import { promisify } from 'util';
 import { sign, verify } from 'jsonwebtoken';
 import {Op} from 'sequelize';
@@ -7,7 +9,6 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { readFileSync } from "fs";
 import { v4 as uuidv4 } from 'uuid';
-import path from "path";
 //middeware error để trace bug 
 import AppError from '../../utils/appError';
 import { errorCode, generateRandomNumberWithRandomDigits, generateRandomString } from '../../utils/util.helper';
@@ -15,6 +16,31 @@ import { getGoogleUser, getGoogleUserInfo, getOauthGooleToken } from '../../util
 import { getFacebookUser, getOauthFacebookToken } from '../../utils/facebookAPI';
 const privateKey = readFileSync("SSL/private-key.txt", "utf-8");
 const publicKey = readFileSync("SSL/public-key.txt", "utf-8");
+
+
+
+const uploadImage = async (imageFile) => {
+    try {
+      let fileName;
+  
+      if (imageFile && imageFile.filename) {
+        fileName = imageFile.filename;
+      } else if (imageFile && imageFile.buffer) {
+        fileName = `adminUser_${Date.now()}_${imageFile.originalname}`;
+        const uploadPath = path.join('public/images/admin-user', fileName);
+  
+        await fs.writeFile(uploadPath, imageFile.buffer).catch(error => console.error('Error writing file:', error));
+      } else {
+        throw new Error('Invalid imageFile object.');
+      }
+  
+      return fileName;
+    } catch (error) {
+      throw error;
+    }
+  };
+
+
 export const getAllUser = async (req, res) => {
     try {
         const nhanvien = await AdminModel.findAll();
@@ -142,12 +168,13 @@ export const loginAdmin = async (req, res) => {
 export const createAdmin = async (req, res) => {
 
     const { fullname, avatar, username, password, status, role } = req.body;
-
+ const thumbnailFile = req.file;
+    const newThumbnailFileName = await uploadImage(thumbnailFile);
     generatePassword(password)
         .then(
             (hashedPassword) => {
                 const admin = AdminModel.create(
-                    { fullname, avatar, username, password: hashedPassword, status, role }
+                    { fullname, avatar: newThumbnailFileName, username, password: hashedPassword, status, role }
                 )
                 return admin
             }
@@ -377,3 +404,27 @@ export async function protect(req, res, next) {
     }
     
 }
+
+export const getImageByFileName = async (req, res) => {
+  const { filename } = req.params;
+  try {
+    const imagePath = path.join(__dirname, '../../../public/images/admin-user', filename);
+    console.log('Constructed Image Path:', imagePath);
+
+    const adminModel = await AdminModel.findOne({
+      where: { avatar: filename },
+      raw: true,
+    });
+
+    console.log('AdminModel:', adminModel);
+
+    if (!adminModel) {
+      res.status(404).json({ status: Status.ERROR, error: 'Image not found' });
+    } else {
+      res.sendFile(imagePath);
+    }
+  } catch (error) {
+    console.error('Error getting image by filename:', error);
+    res.status(500).json({ status: Status.ERROR, error: 'Internal Server Error' });
+  }
+};

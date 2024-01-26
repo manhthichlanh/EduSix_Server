@@ -6,6 +6,8 @@ import BannerModel from '../models/banner.model';
 import { Op, Sequelize } from 'sequelize';
 
 
+
+
 const Status = {
   SUCCESS: 'success',
   ERROR: 'error',
@@ -35,7 +37,9 @@ const uploadImage = async (imageFile) => {
 
 const getAllBanners = async (req, res) => {
   try {
-    const allBanners = await BannerModel.findAll();
+    const allBanners = await BannerModel.findAll({
+      order: [['ordinal_number', 'ASC']],
+    });
     res.json(allBanners);
   } catch (error) {
     console.error('Error getting all banners:', error);
@@ -57,6 +61,48 @@ const getBannerById = async (req, res) => {
     res.status(500).json({ status: Status.ERROR, error: 'Internal Server Error' });
   }
 };
+
+
+
+
+const getImageByFileName = async (req, res) => {
+  const { filename } = req.params;
+  try {
+    const imagePath = path.join(__dirname, '../../../public/images/banner', filename);
+    console.log('Constructed Image Path:', imagePath);
+
+    const banner = await BannerModel.findOne({
+      where: { thumnail: filename },
+      raw: true,
+    });
+
+    console.log('Banner:', banner);
+
+    if (!banner) {
+      res.status(404).json({ status: Status.ERROR, error: 'Image not found' });
+    } else {
+      // Directly set the content type and send the file
+      res.sendFile(imagePath);
+    }
+  } catch (error) {
+    console.error('Error getting image by filename:', error);
+    res.status(500).json({ status: Status.ERROR, error: 'Internal Server Error' });
+  }
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 const addBanner = async (req, res) => {
   try {
@@ -82,7 +128,7 @@ const addBanner = async (req, res) => {
     const newThumnailFileName = await uploadImage(thumnailFile);
 
     const newBanner = await BannerModel.create({
-      thumnail: `images/banner/${newThumnailFileName}`,
+      thumnail: newThumnailFileName,
       link,
       status,
       ordinal_number,
@@ -110,27 +156,35 @@ const updateBanner = async (req, res) => {
       console.log('Existing Banner:', bannerToUpdate);
 
       const thumnailFile = req.file;
-      const existingThumnailFilePath = path.join(`public/${bannerToUpdate.thumnail || ''}`);
+      let newThumnailFileName;
 
-      try {
-        await fs.access(existingThumnailFilePath);
-        await fs.unlink(existingThumnailFilePath);
-        console.log('Existing thumbnail deleted successfully.');
-      } catch (error) {
-        console.error('Error accessing or deleting file:', error);
+      // Nếu có gửi thumnail mới, thì cập nhật
+      if (thumnailFile) {
+        const existingThumnailFilePath = path.join(`public/images/banner/${bannerToUpdate.thumnail || ''}`);
+
+        try {
+          await fs.access(existingThumnailFilePath);
+          await fs.unlink(existingThumnailFilePath);
+          console.log('Existing thumbnail deleted successfully.');
+
+          newThumnailFileName = await uploadImage(thumnailFile);
+        } catch (error) {
+          console.error('Error accessing or deleting file:', error);
+        }
+      } else {
+        // Nếu không có thumnail mới, giữ nguyên thumnail cũ
+        newThumnailFileName = bannerToUpdate.thumnail;
       }
-
-      const newThumnailFileName = await uploadImage(thumnailFile);
 
       // Get the old and new ordinal_number values
       const oldOrdinalNumber = bannerToUpdate.ordinal_number;
-      const newOrdinalNumber = parseInt(ordinal_number);
+      const newOrdinalNumber = ordinal_number !== undefined ? parseInt(ordinal_number) : oldOrdinalNumber;
 
       // Find other banners affected by the change
       const bannersToUpdate = await BannerModel.findAll({
         where: {
           ordinal_number: {
-            [Sequelize.Op.ne]: oldOrdinalNumber, // Exclude the current banner
+            [Op.between]: [Math.min(oldOrdinalNumber, newOrdinalNumber), Math.max(oldOrdinalNumber, newOrdinalNumber)],
           },
         },
       });
@@ -138,7 +192,19 @@ const updateBanner = async (req, res) => {
       // Update the ordinal_number values
       await Promise.all(
         bannersToUpdate.map(async (banner) => {
-          const updatedOrdinalNumber = banner.ordinal_number === newOrdinalNumber ? oldOrdinalNumber : banner.ordinal_number;
+          let updatedOrdinalNumber;
+
+          if (oldOrdinalNumber < newOrdinalNumber) {
+            // Moving the ordinal_number up
+            updatedOrdinalNumber = banner.ordinal_number === oldOrdinalNumber ? newOrdinalNumber : banner.ordinal_number - 1;
+          } else if (oldOrdinalNumber > newOrdinalNumber) {
+            // Moving the ordinal_number down
+            updatedOrdinalNumber = banner.ordinal_number === oldOrdinalNumber ? newOrdinalNumber : banner.ordinal_number + 1;
+          } else {
+            // No change in ordinal_number
+            updatedOrdinalNumber = banner.ordinal_number;
+          }
+
           await BannerModel.update(
             {
               ordinal_number: updatedOrdinalNumber,
@@ -148,27 +214,33 @@ const updateBanner = async (req, res) => {
         })
       );
 
+      // Update only the fields with values
+      const updateFields = {};
+      if (link !== undefined) updateFields.link = link;
+      if (status !== undefined) updateFields.status = status;
+      if (name_banner !== undefined) updateFields.name_banner = name_banner;
+
       // Update the current banner
       const [updatedBanner] = await BannerModel.update(
         {
-          thumnail: `images/banner/${newThumnailFileName}`,
-          link,
-          status,
+          thumnail: newThumnailFileName,
           ordinal_number: newOrdinalNumber,
-          name_banner, // Add the name_banner field
+          ...updateFields,
         },
-        { where: { id }, returning: true, raw: true }
+        { where: { id }}
       );
 
       console.log('Banners updated successfully:', bannersToUpdate);
       console.log('Banner updated successfully:', updatedBanner);
-      res.json({ status: Status.SUCCESS, data: updatedBanner });
+      res.json({ status: Status.SUCCESS, data: bannersToUpdate });
     }
   } catch (error) {
     console.error('Error updating banner:', error);
     res.status(500).json({ status: Status.ERROR, error: error.message || 'Internal Server Error' });
   }
 };
+
+
 
 
 
@@ -181,18 +253,43 @@ const deleteBanner = async (req, res) => {
     if (!bannerToDelete) {
       res.status(404).json({ status: Status.ERROR, error: 'Banner not found' });
     } else {
-      const thumnailFilePath = path.join( `public/${bannerToDelete.thumnail}`);
+      const thumnailFilePath = path.join(`public/images/banner/${bannerToDelete.thumnail}`);
 
       try {
         await fs.access(thumnailFilePath);
         await fs.unlink(thumnailFilePath);
         console.log('Thumbnail deleted successfully.');
       } catch (error) {
-        // Handle the case when the file doesn't exist or cannot be deleted
         console.error('Error accessing or deleting file:', error);
       }
 
+      // Get the ordinal_number of the banner to be deleted
+      const deletedOrdinalNumber = bannerToDelete.ordinal_number;
+
+      // Delete the current banner
       await BannerModel.destroy({ where: { id }, raw: true });
+
+      // Find banners with higher ordinal_numbers and update them
+      const bannersToUpdate = await BannerModel.findAll({
+        where: {
+          ordinal_number: {
+            [Op.gt]: deletedOrdinalNumber,
+          },
+        },
+      });
+
+      // Update the ordinal_number values of banners with higher ordinal_numbers
+      await Promise.all(
+        bannersToUpdate.map(async (banner) => {
+          await BannerModel.update(
+            {
+              ordinal_number: banner.ordinal_number - 1,
+            },
+            { where: { id: banner.id } }
+          );
+        })
+      );
+
       console.log('Banner deleted successfully');
       res.json({ status: Status.SUCCESS, message: 'Banner deleted successfully' });
     }
@@ -202,6 +299,7 @@ const deleteBanner = async (req, res) => {
   }
 };
 
+
 export {
   Status,
   getAllBanners,
@@ -209,5 +307,5 @@ export {
   addBanner,
   updateBanner,
   deleteBanner,
-
+  getImageByFileName
 };

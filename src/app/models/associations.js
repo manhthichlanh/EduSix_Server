@@ -13,6 +13,11 @@ import AnswerModel from './answer.model';
 import VideoModel from './video.model';
 import CertificateModel from './certificate.model';
 import OrderModel from './order.model';
+import BlogCategory from './blogCategory.model';
+import Author from './author.model';
+import Blog from './blog.model';
+
+
 import NotificationModel from './notification.model';
 // Định nghĩa mối quan hệ giữa User và Course
 AdminModel.hasMany(CourseModel, { foreignKey: 'admin_id' });
@@ -75,3 +80,16 @@ QuizzModel.belongsTo(LessonModel, { foreignKey: "lesson_id"});
 //Quan hệ giữa Quizz và Answer
 QuizzModel.hasMany(AnswerModel, { foreignKey: "quizz_id"});
 AnswerModel.belongsTo(QuizzModel, { foreignKey: "quizz_id"});
+//Quan hệ giữa Author và Blog
+Author.hasMany(Blog, { foreignKey: "author_id"});
+Blog.belongsTo(Author, { foreignKey: "author_id"});
+//Quan hệ giữa BlogCategory và Blog
+BlogCategory.hasMany(Blog, { foreignKey: "blog_category_id"});
+Blog.belongsTo(BlogCategory, { foreignKey: "blog_category_id"});
+
+//Quan hệ giữa Admin và Blog
+AdminModel.hasMany(Blog, { foreignKey: "admin_id"});
+Blog.belongsTo(AdminModel, { foreignKey: "admin_id"});
+//Quan hệ giữa User và Blog
+UserModel.hasMany(Blog, { foreignKey: "user_id"});
+Blog.belongsTo(UserModel, { foreignKey: "user_id"});

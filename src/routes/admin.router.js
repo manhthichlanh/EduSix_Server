@@ -11,6 +11,9 @@ import initCertificateRoute from "./certificate.route";
 import initOrderRoute from "./order-router";
 import initNotificationRoute from "./notificattion.router";
 import initBannerRoute from "./banner.router";
+import initBlogCategoryRoute from "./blogCategory.router";
+import initBlogRoute from "./blog.router";
+import initAuthorRoute from "./author.router";
 export default function adminRouter(app) {
     initCourseRoute(app)
     initSectionRoute(app)
@@ -25,4 +28,7 @@ export default function adminRouter(app) {
     initOrderRoute(app)
     initNotificationRoute(app)
     initBannerRoute(app)
+    initBlogCategoryRoute(app)
+    initBlogRoute(app)
+    initAuthorRoute(app)
 }
