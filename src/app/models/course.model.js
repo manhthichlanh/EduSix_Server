@@ -13,7 +13,13 @@ const CourseModel = sequelize.define("course", {
     category_id: {
         type: DataTypes.INTEGER,
     },
+    author_id: {
+        type: DataTypes.INTEGER,
+    },
     admin_id: {
+        type: DataTypes.INTEGER,
+    },
+    user_id: {
         type: DataTypes.INTEGER,
     },
     name: {

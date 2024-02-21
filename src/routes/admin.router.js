@@ -14,6 +14,7 @@ import initBannerRoute from "./banner.router";
 import initBlogCategoryRoute from "./blogCategory.router";
 import initBlogRoute from "./blog.router";
 import initAuthorRoute from "./author.router";
+import initReviewRoute from "./review.router";
 export default function adminRouter(app) {
     initCourseRoute(app)
     initSectionRoute(app)
@@ -31,4 +32,5 @@ export default function adminRouter(app) {
     initBlogCategoryRoute(app)
     initBlogRoute(app)
     initAuthorRoute(app)
+    initReviewRoute(app)
 }

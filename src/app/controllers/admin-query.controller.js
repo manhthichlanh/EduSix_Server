@@ -653,6 +653,7 @@ export const getAllCourseProgressByUser = async (req, res) => {
     console.log(user_id)
     try {
         const enrollment_doc = await CourseEnrollmentsModel.findAll({
+            order: [['enrollment_id', 'DESC']],
             where: { user_id },
             include: [
                 {

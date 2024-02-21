@@ -24,14 +24,16 @@ export const createCourse = async (req, res) => {
         }
 
         // Tạo khóa học
-        const { category_id, admin_id, name, course_price, slug, content, status, type } = req.body;
+        const { category_id, author_id, admin_id, user_id, name, course_price, slug, content, status, type } = req.body;
         const fileName = Date.now() + '-' + uploadedFile.originalname.toLowerCase().split(" ").map(item => item.trim()).join("");
 
         await sequelize.transaction(async (transaction) => {
             const newRecord = await CourseModel.create(
                 {
                     category_id,
-                    admin_id,
+                    admin_id: admin_id || null,
+                    author_id: author_id || null,
+                    user_id: user_id || null,
                     name,
                     course_price,
                     slug,
