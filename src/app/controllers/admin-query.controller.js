@@ -67,8 +67,7 @@ export const createLessonWithVideo = async (req, res, next) => {
         }, { transaction: t });
         //Cập nhật trường thứ tự (ordinal_number = lesson_id) của lesson vừa tạo
         await newLesson.update({ ordinal_number: newLesson.lesson_id }, { fields: ['ordinal_number'], transaction: t });
-        //Tạo video mới 
-
+        //Tạo video mới
         const newVideo = await VideoModel.create({
             lesson_id: newLesson.lesson_id,
             file_videos: fileName + ".m3u8",
@@ -654,6 +653,7 @@ export const getAllCourseProgressByUser = async (req, res) => {
     console.log(user_id)
     try {
         const enrollment_doc = await CourseEnrollmentsModel.findAll({
+            order: [['enrollment_id', 'DESC']],
             where: { user_id },
             include: [
                 {

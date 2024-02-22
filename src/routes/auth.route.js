@@ -2,6 +2,7 @@ import { Router } from "express";
 let router = Router();
 import { join } from "path"
 import * as initAuth from "../app/controllers/auth.controller"
+import { uploadImageOnMemory } from "../app/configs/uploadImages.config";
 export default function initUserRoute(app) {
 
     router.post("/login", initAuth.loginUser)
@@ -9,7 +10,7 @@ export default function initUserRoute(app) {
     router.post("/login/admin", initAuth.loginAdmin)
     router.post("/register", initAuth.createUser)
     router.post("/user/create", initAuth.createUser)
-    router.post("/admin/create", initAuth.createAdmin)
+    router.post("/admin/create", uploadImageOnMemory.single("avatar"), initAuth.createAdmin)
     router.post("/verify/user", initAuth.verifyUserToken)
     router.post("/verify/admin", initAuth.verifyAdminToken)
     router.get("/oauth/google", initAuth.googleAuth2)
@@ -20,5 +21,7 @@ export default function initUserRoute(app) {
     router.get("/popup", (req, res) => {
         res.sendFile(join(process.cwd(), "test.html"))
     })
+
+    router.get("/avatar/:filename", initAuth.getImageByFileName);
     app.use("/auth/", router);
 }

@@ -9,6 +9,7 @@ export const getAllCertificateByUser = async (req, res) => {
     const user_id = req.params.user_id;
     try {
         const certificate_doc = await CertificateModel.findAll({
+            order: [['certificate_id', 'DESC']],
             where: {
                 user_id
             },

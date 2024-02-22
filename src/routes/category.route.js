@@ -8,8 +8,8 @@ export default function initCategoryRoute(app) {
     router.get("/:id", initCategory.getCategoryById)
     // router.post("/", initCategory.createCategory)
     router.delete("/:id", initCategory.deleteCategory)
-    router.put("/:id", initCategory.updateCategory)
+    router.patch("/:id", uploadImageOnMemory.single('logo_cate'), initCategory.updateCategory)
     router.post("/", uploadImageOnMemory.single('logo_cate'), initCategory.createCategory)
-    router.get("/logo_cate/:fileName", initCategory.getImage);
+    router.get("/logo_cate/:filename", initCategory.getImage);
     app.use("/category", router);
 }
