@@ -20,7 +20,7 @@ const LessonModel = sequelize.define("lesson", {
     },
     content: {
         type: DataTypes.TEXT,
-        allowNull: false
+        allowNull: true
     },
     status: {
         type: DataTypes.BOOLEAN,
