@@ -7,7 +7,7 @@ export const createLesson = async (req, res) => {
     try {
         const { section_id, name, content, lesson_type, duration } = req.body;
         const ramdomNumber = generateRandomNumberWithRandomDigits(1, 3);
-        const durationTime = duration ?? ramdomNumber;
+        const durationTime = duration || ramdomNumber;
         const ordinal_number = ramdomNumber;
 
         const result = await sequelize.transaction(async (t) => {
@@ -52,7 +52,9 @@ export const createLesson = async (req, res) => {
                 ordinal_number,
                 is_lock: count_current_lesson > 0 ? true : false
             }, { transaction: t });
-            return LessonQuizzDoc
+            await LessonQuizzDoc.update({ ordinal_number: LessonQuizzDoc.lesson_id }, { fields: ['ordinal_number'], transaction: t });
+            return LessonQuizzDoc;
+
         });
         return res.status(200).json({lesson: result});
     } catch (error) {
