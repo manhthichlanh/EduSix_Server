@@ -140,7 +140,7 @@ const addBlog = async (req, res) => {
 
 const updateBlog = async (req, res) => {
   const blogId = req.params.id;
-  const { name, status, content } = req.body;
+  const { name, status, content, blog_category_id, author_id, admin_id, user_id } = req.body;
 
   try {
     const blogToUpdate = await BlogModel.findByPk(blogId, { raw: true });
@@ -173,6 +173,14 @@ const updateBlog = async (req, res) => {
       if (newThumbnailFileName) updateFields.thumbnail = newThumbnailFileName;
       if (content !== undefined) updateFields.content = content;
       if (status !== undefined) updateFields.status = status;
+      if (blog_category_id !== undefined) {
+        updateFields.blog_category_id = blog_category_id !== '' ? blog_category_id : null;
+      }
+      if (author_id !== undefined) {
+        updateFields.author_id = author_id !== '' ? author_id : null;
+      }
+      if (admin_id !== undefined) updateFields.admin_id = admin_id;
+      if (user_id !== undefined) updateFields.user_id = user_id;
 
       const [updatedRowsCount] = await BlogModel.update(
         updateFields,
@@ -193,6 +201,7 @@ const updateBlog = async (req, res) => {
     res.status(500).json({ status: Status.ERROR, error: error.message || 'Internal Server Error' });
   }
 };
+
 
 const deleteBlog = async (req, res) => {
   const id = req.params.id;

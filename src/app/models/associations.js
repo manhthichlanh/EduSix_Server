@@ -62,8 +62,8 @@ CourseModel.belongsTo(CategoryModel, { foreignKey: 'category_id'});
 Author.hasMany(CourseModel, { foreignKey: "author_id"});
 CourseModel.belongsTo(Author, { foreignKey: "author_id"});
 //Quan hệ giữa User và Course
-UserModel.hasMany(CourseModel, { foreignKey: "user_id"});
-CourseModel.belongsTo(UserModel, { foreignKey: "user_id"});
+// UserModel.hasMany(CourseModel, { foreignKey: "user_id"});
+// CourseModel.belongsTo(UserModel, { foreignKey: "user_id"});
 // Định nghĩa mối quan hệ giữa Course và Section
 CourseModel.hasMany(SectionModel, { foreignKey: 'course_id' });
 SectionModel.belongsTo(CourseModel, { foreignKey: 'course_id' });

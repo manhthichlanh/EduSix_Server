@@ -91,7 +91,9 @@ export const createCategory = async (req, res) => {
 
 export const getAllCategory = async (req, res) => {
     try {
-        const records = await CategoryModel.findAll();
+        const records = await CategoryModel.findAll({
+            order: [['ordinal_number', 'ASC']],
+        });
         res.status(200).json(records);
     } catch (error) {
         res.status(500).json({ error: error.message });
