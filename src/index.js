@@ -17,6 +17,7 @@ const io = new SocketIOServer(httpServer, {
 //Socket IO Server
 import socketService from "./app/services/socket.service";
 import EventEmitter from "events";
+import StaticPath from "../index";
 
 //Config .env file
 config();
@@ -51,7 +52,7 @@ const finishedEmitter = (feed) => {
 
 global._initEmitter = initEmitter;
 global._finishedEmitter = finishedEmitter;
-
+global._staticPath = StaticPath;
 socketService(io);
 
 initApiV1(app);

@@ -3,7 +3,7 @@ import sequelize from "../models/db";
 import fs, { existsSync, readFile, unlinkSync } from "fs";
 // import ffmpeg from "fluent-ffmpeg";
 import path from "path";
-import { getAndDeleteHLSFile } from "../../utils/util.helper";
+import { generateRandomString, getAndDeleteHLSFile } from "../../utils/util.helper";
 const uploadDir = "public/videos";
 //Nếu không tìm thấy thư mục thì tạo lại
 if (!existsSync(uploadDir)) {
@@ -16,84 +16,23 @@ if (!existsSync(uploadDir)) {
 // import { fetchYoutube } from "../../utils/googleAPI";
 // import AppError from "../../utils/appError";
 
-// export const createVideo = async (req, res) => {
-//     const uploadedFile = req.file;
-//     const { lesson_id, youtube_id, status, tagetLessonRecord } = req.body;
-//     const fileName = !uploadedFile ? null : uploadedFile.originalname + ".m3u8";
-//     // try {
-//     // const { buffer } = uploadedFile
-//     let duration = 0;
+export const createVideo = async (req, res) => {
+    const { lesson_id, duration, youtube_id, lesson_type, videoObjectId } = req.body;
 
-//     if (tagetLessonRecord.type === 1) duration = findVideoDuration(uploadedFile?.buffer);
-//     else if (tagetLessonRecord.type === 0) {
-//         await fetchYoutube(youtube_id)
-//             .then(res => {
-//                 duration = res.duration
-//             })
-//             .catch(err => {
-//                 console.log(err)
-//                 return res.status(402).json({ message: "Chưa thể xác định được thông tin từ youtube_id bạn cung cấp!" })
-//             })
-//     }
-//     try {
-//         await sequelize.transaction(async (transaction) => {
-//             const [row, created] = await VideoModel.findOrCreate({
-//                 where: { lesson_id: lesson_id },
-//                 defaults: {
-//                     lesson_id,
-//                     file_videos: fileName,
-//                     youtube_id,
-//                     duration,
-//                     status,
-//                     type: tagetLessonRecord.type
-//                 },
-//                 transaction
-//             },)
-
-//             if (created) throw new AppError(500, "fail","Tạo mới database thất bại!")
-
-//             if (uploadedFile) {
-//                 const filePath = path.join(uploadDir, fileName);
-
-//                 const newBuffer = Buffer.from("Chào mày")
-//                 //Create file hls type (m3u4)
-//                 new ffmpeg() // Use the videoFileName based on your database query
-//                     .input(newBuffer)
-//                     .addOption('-hls_time', 10)
-//                     .addOption('-hls_list_size', 0)
-//                     .addOption('-f', 'hls')
-//                     .addOption('-codec:v', 'libx264')
-//                     .addOption('-preset', 'ultrafast')
-//                     .addOption('-hls_flags', 'delete_segments')
-//                     .output(filePath)
-//                     .on('end', () => {
-//                         console.log('HLS generation finished.');
-//                         return res.status(201).json(row);
-//                     })
-//                     .on('error', (err) => {
-//                         console.error('Error:', err);
-//                         throw new AppError(500, "fail", err.message)
-//                         return
-//                     })
-//                     .on('progress', function (progress) {
-//                         console.log('Processing: ' + progress.percent + '% done');
-//                         console.log(progress);
-//                     })
-//                     .run();
-//             }
-//         })
-//     } catch (error) {
-//         console.log(error);
-//         return res.status(error.statusCode ? error.statusCode : 500).json({ message: error.message })
-//     }
-
-
-//     // } catch (error) {
-//     //     console.log(error);
-//     //     return res.status(error.statusCode ? error.statusCode : 500).json({ message: error?.message });
-//     // }
-
-// };
+    try {
+        await VideoModel.create({
+            lesson_id: lesson_id,
+            file_videos: videoObjectId + ".m3u8",
+            youtube_id: youtube_id,
+            duration,
+            type: lesson_type
+        });
+        return res.status(200).json({message: "Đăng tải video thành công!"});
+    } catch (error) {
+        console.log(error);
+        return res.status(error.statusCode ? error.statusCode : 500).json({ message: error.message })
+    }
+};
 export const getAllVideo = async (req, res) => {
     try {
         const records = await VideoModel.findAll();
@@ -203,6 +142,13 @@ export const getVideoById = async (req, res) => {
 //     }
 
 // };
+
+export const createVideoStream = async (req, res) => {
+    // const { _videosDir, _segmentsDir, _tempDir, handlePath } = _staticPath;
+    // const videosObjectId = generateRandomString(11);
+    // const videosFile
+}
+
 export const deleteVideo = async (req, res) => {
     const t = await sequelize.transaction();
 
@@ -309,6 +255,85 @@ export const getVideoStream = async (req, res) => {
             );
 
             break;
+        default:
+
+            break;
+    }
+}
+export const getVideoStreamV2 = async (req, res) => {
+    const fileName = req.params.fileName;
+    const objectId = req.params.objectId;
+    if (fileName.split(".").slice(0, -1) === "") {
+        res.writeHead(404, { 'Content-Type': 'text/plain' });
+        res.write('file not found: %s\n', fileName);
+        return res.end();
+    }
+    const { handlePath, _videosDir } = _staticPath;
+    const currentVideoPath = handlePath(_videosDir, objectId).join;
+    const segmentsPath = handlePath(currentVideoPath + "/segments", fileName).join;
+    const manifestPath = handlePath(currentVideoPath, "master.m3u8").join
+    switch (path.extname(fileName)) {
+        case ".m3u8":
+            console.log("đang select manifest File")
+            fs.readFile(manifestPath, "utf-8", function (err, data) {
+                if (data) {
+                    res.setHeader('Content-Type', 'application/vnd.apple.mpegurl');
+                    res.end(data);
+                }
+                if (err) {
+                    console.log(err)
+                }
+            });
+
+            break;
+        case ".ts":
+            console.log("đang select segments File")
+            fs.stat(segmentsPath, (err, stat) => {
+                if (err) {
+                    console.log(err)
+                }
+                if (stat) {
+                    const fileSize = stat.size;
+                    const range = req.headers.range;
+                    if (range) {
+                        const parts = range.replace(/bytes=/, "").split("-");
+                        const start = parseInt(parts[0], 10);
+                        const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
+                        const chunksize = (end - start) + 1;
+                        const file = fs.createReadStream(segmentsPath, { start, end });
+                        const head = {
+                            'Content-Range': `bytes ${start}-${end}/${fileSize}`,
+                            'Accept-Ranges': 'bytes',
+                            'Content-Length': chunksize,
+                            'Content-Type': 'video/mp2t',
+                        };
+
+                        res.writeHead(206, head);
+                        file.pipe(res);
+                    } else {
+                        const head = {
+                            'Content-Length': fileSize,
+                            'Content-Type': 'video/mp2t',
+                        };
+                        res.writeHead(200, head);
+                        fs.createReadStream(segmentsPath).pipe(res);
+                    }
+                }
+            }
+            );
+
+            break;
+        case ".jpg":
+            try {
+                const imagePath = handlePath(currentVideoPath + "/thumbnail", fileName).join;
+                console.log({ imagePath })
+                const file = await fs.promises.readFile(imagePath);
+                console.log(file)
+                return res.status(200).send(file);
+            } catch (error) {
+                return res.status(404).json({ message: "Không tìm thấy file!" })
+            }
+
         default:
 
             break;

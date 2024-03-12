@@ -63,6 +63,13 @@ export const getAndDeleteHLSFile = async (m3u8FilePath, segmentFilePath) => {
     })
     await fs.promises.unlink(m3u8FilePath);
 }
+export const fsExit = (filePath) => {
+    return new Promise((resolve, reject) => {
+        fs.exists(filePath, (exists) => {
+            resolve(exists);
+        });
+    });
+}
 
 export const switchAction = (command) => {
     return {

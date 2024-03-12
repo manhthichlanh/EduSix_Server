@@ -342,6 +342,7 @@ export const getAllLessonVideoQuizz = async (req, res) => {
             },
             {
                 model: QuizzModel,
+                as:"quizzes",
                 include: [
                     {
                         model: AnswerModel
@@ -416,6 +417,7 @@ export async function getAllSectionLessonQuizzVideo(req, res, next) {
                         },
                         {
                             model: QuizzModel,
+                            as:"quizzes",
                             include: [
                                 {
                                     model: AnswerModel

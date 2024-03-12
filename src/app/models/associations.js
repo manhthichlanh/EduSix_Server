@@ -36,8 +36,8 @@ CourseProgressModel.belongsTo(CourseEnrollmentsModel, { foreignKey: 'enrollment_
 CourseEnrollmentsModel.hasMany(CourseProgressModel, { foreignKey: 'enrollment_id' });
 CourseProgressModel.belongsTo(CourseEnrollmentsModel, { foreignKey: 'enrollment_id' });
 
-CourseProgressModel.hasOne(CertificateModel, {foreignKey: 'course_progress_id'});
-CertificateModel.belongsTo(CourseProgressModel, {foreignKey: 'course_progress_id'})
+CourseProgressModel.hasOne(CertificateModel, { foreignKey: 'course_progress_id' });
+CertificateModel.belongsTo(CourseProgressModel, { foreignKey: 'course_progress_id' })
 
 CourseProgressModel.hasMany(SectionProgressModel, { foreignKey: 'course_progress_id' });
 SectionProgressModel.belongsTo(CourseProgressModel, { foreignKey: 'course_progress_id' });
@@ -56,11 +56,11 @@ CourseModel.hasMany(CourseEnrollmentsModel, { foreignKey: 'course_id' });
 CourseEnrollmentsModel.belongsTo(CourseModel, { foreignKey: 'course_id' });
 
 // Định nghĩa mối quan hệ giữa Category và Course
-CategoryModel.hasMany(CourseModel, { foreignKey: 'category_id'});
-CourseModel.belongsTo(CategoryModel, { foreignKey: 'category_id'});
+CategoryModel.hasMany(CourseModel, { foreignKey: 'category_id' });
+CourseModel.belongsTo(CategoryModel, { foreignKey: 'category_id' });
 // //Quan hệ giữa Author và Course
-Author.hasMany(CourseModel, { foreignKey: "author_id"});
-CourseModel.belongsTo(Author, { foreignKey: "author_id"});
+Author.hasMany(CourseModel, { foreignKey: "author_id" });
+CourseModel.belongsTo(Author, { foreignKey: "author_id" });
 //Quan hệ giữa User và Course
 // UserModel.hasMany(CourseModel, { foreignKey: "user_id"});
 // CourseModel.belongsTo(UserModel, { foreignKey: "user_id"});
@@ -71,30 +71,30 @@ SectionModel.belongsTo(CourseModel, { foreignKey: 'course_id' });
 SectionModel.hasMany(LessonModel, { foreignKey: 'section_id' });
 LessonModel.belongsTo(SectionModel, { foreignKey: 'section_id' });
 //Đình nghĩa mối quan hệ Lesson và videos
-LessonModel.hasMany(QuizzModel, { foreignKey: "lesson_id" });
+LessonModel.hasMany(QuizzModel, { foreignKey: "lesson_id", as: 'quizzes' });
 QuizzModel.belongsTo(LessonModel, { foreignKey: "lesson_id" });
 //Đình nghĩa mối quan hệ Lesson và quizzs
 LessonModel.hasMany(VideoModel, { foreignKey: "lesson_id" });
 VideoModel.belongsTo(LessonModel, { foreignKey: "lesson_id" });
 //QUan he quizz và answer 
-QuizzModel.hasMany(AnswerModel, { foreignKey: "quizz_id",as:"relaQuizz"});
-AnswerModel.belongsTo(QuizzModel, { foreignKey: "quizz_id",as:"relaAnswer"});
+QuizzModel.hasMany(AnswerModel, { foreignKey: "quizz_id", as: "relaQuizz" });
+AnswerModel.belongsTo(QuizzModel, { foreignKey: "quizz_id", as: "relaAnswer" });
 //Quan hệ giữa Quizz và Lesson
-LessonModel.hasMany(QuizzModel, { foreignKey: "lesson_id"});
-QuizzModel.belongsTo(LessonModel, { foreignKey: "lesson_id"});
+LessonModel.hasMany(QuizzModel, { foreignKey: "lesson_id" });
+QuizzModel.belongsTo(LessonModel, { foreignKey: "lesson_id" });
 //Quan hệ giữa Quizz và Answer
-QuizzModel.hasMany(AnswerModel, { foreignKey: "quizz_id"});
-AnswerModel.belongsTo(QuizzModel, { foreignKey: "quizz_id"});
+QuizzModel.hasMany(AnswerModel, { foreignKey: "quizz_id" });
+AnswerModel.belongsTo(QuizzModel, { foreignKey: "quizz_id" });
 //Quan hệ giữa Author và Blog
-Author.hasMany(Blog, { foreignKey: "author_id"});
-Blog.belongsTo(Author, { foreignKey: "author_id"});
+Author.hasMany(Blog, { foreignKey: "author_id" });
+Blog.belongsTo(Author, { foreignKey: "author_id" });
 //Quan hệ giữa BlogCategory và Blog
-BlogCategory.hasMany(Blog, { foreignKey: "blog_category_id"});
-Blog.belongsTo(BlogCategory, { foreignKey: "blog_category_id"});
+BlogCategory.hasMany(Blog, { foreignKey: "blog_category_id" });
+Blog.belongsTo(BlogCategory, { foreignKey: "blog_category_id" });
 
 //Quan hệ giữa Admin và Blog
-AdminModel.hasMany(Blog, { foreignKey: "admin_id"});
-Blog.belongsTo(AdminModel, { foreignKey: "admin_id"});
+AdminModel.hasMany(Blog, { foreignKey: "admin_id" });
+Blog.belongsTo(AdminModel, { foreignKey: "admin_id" });
 //Quan hệ giữa User và Blog
-UserModel.hasMany(Blog, { foreignKey: "user_id"});
-Blog.belongsTo(UserModel, { foreignKey: "user_id"});
+UserModel.hasMany(Blog, { foreignKey: "user_id" });
+Blog.belongsTo(UserModel, { foreignKey: "user_id" });
