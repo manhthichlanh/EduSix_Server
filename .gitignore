@@ -3,7 +3,6 @@ node_modules/
 test.json
 socketIniter.js
 package-lock.json
-package.json
 public/videos/*
 public/images/*
 *.env
