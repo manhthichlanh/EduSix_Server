@@ -22,7 +22,7 @@ export const createVideo = async (req, res) => {
     try {
         await VideoModel.create({
             lesson_id: lesson_id,
-            file_videos: videoObjectId + ".m3u8",
+            file_videos: videoObjectId,
             youtube_id: youtube_id,
             duration,
             type: lesson_type
