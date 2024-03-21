@@ -119,3 +119,16 @@ export const generateRandomString = (length) => {
 
     return randomString;
 }
+export const converseFileOriginalName = (name) => {
+    return name ?
+        name
+            .toLowerCase() // Chuyển tất cả thành chữ thường
+            .normalize("NFD") // Loại bỏ dấu
+            .replace(/[\u0300-\u036F]/g, "") // Loại bỏ các dấu
+            .replace(/đ/g, "d") // Thay thế 'đ' thành 'd'
+            // .replace(/./g, "") // Thay thế 'đ' thành 'd'
+            .split(" ")
+            .map(item => item.trim())
+            .join("_")
+        : "";
+}

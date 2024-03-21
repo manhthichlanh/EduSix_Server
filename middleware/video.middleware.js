@@ -2,7 +2,7 @@ import ffmpeg from "fluent-ffmpeg";
 import path from "path";
 import fs from "fs";
 import LessonModel from "../src/app/models/lesson.model";
-import { findVideoDuration, generateRandomString, getAndDeleteHLSFile, switchAction } from "../src/utils/util.helper";
+import { converseFileOriginalName, findVideoDuration, generateRandomString, getAndDeleteHLSFile, switchAction } from "../src/utils/util.helper";
 import { fetchYoutube } from "../src/utils/googleAPI";
 export const checkRequestVideo = async (req, res, next) => {
     const { lesson_id, youtube_id, lesson_type } = req.body;
@@ -48,7 +48,7 @@ export const checkRequestVideo = async (req, res, next) => {
             return res.status(401).json({ message: `Bài học theo lesson_id:${lesson_id} không tồn tại!` })
         }
     } catch (error) {
-        console.log({error})
+        console.log({ error })
     }
 }
 // const getResolution = async (filePath) => {
@@ -140,6 +140,7 @@ export const convertToHLS = async (req, res) => {
 
 
 }
+
 const screenshotCommand = async (inputFilePath, thumbnailDir) => {
     const thumbnailSizes = ['1280x720', '640x360', '320x180', '120x90'];
     try {
@@ -190,7 +191,9 @@ const encodeHLSCommand = (inputFilePath, segmentsDir, m3u8FilePath, onStart) => 
                 console.log(command)
                 onStart(command)
             })
-
+            .on('progress', function (progress) {
+                console.log('Processing: ' + progress.percent + '% done');
+            })
             .on('end', async () => {
                 console.log('HLS conversion finished.');
                 // Remove the temporary input file
@@ -246,3 +249,94 @@ export const encodeVideoToHLS = async (req, res, next) => {
         return res.status(500).json({ message: error.message })
     }
 }
+export const encodeAlreadyVideoToHLS = async (req, res) => {
+    const { videoObjectId, fileName } = req.body;
+    const { videosDir, tempDir, segmentsDir, thumbnailDir } = await _staticPath._generateVideoPath(videoObjectId)
+    try {
+        const inputFilePath = path.join(tempDir, fileName);
+
+        console.log(inputFilePath);
+        try {
+            await fs.promises.writeFile(inputFilePath, uploadedFile?.buffer)
+        } catch (error) {
+            return res.status("500").json(error.message)
+        }
+        const m3u8FilePath = path.join(videosDir, "master.m3u8");
+        console.log(m3u8FilePath)
+        await screenshotCommand(inputFilePath, thumbnailDir);
+        await encodeHLSCommand(inputFilePath, segmentsDir, m3u8FilePath, (command) => {
+        })
+            .catch(async () => {
+                await fs.promises.unlink(videosDir)
+                    .catch(err => console.log(err))
+            });
+        req.body.videoObjectId = videoObjectId;
+        return next();
+    } catch (error) {
+        return res.status(500).json({ message: error.message })
+    }
+}
+
+const mergeChunks = async (fileName, totalChunks, chunksDir, tempDir) => {
+    const chunkDir = chunksDir;
+    const mergedFilePath = tempDir;
+
+    if (!fs.existsSync(mergedFilePath)) {
+        fs.mkdirSync(mergedFilePath);
+    }
+
+    const writeStream = fs.createWriteStream(`${mergedFilePath}/${fileName}`);
+    for (let i = 0; i < totalChunks; i++) {
+        const chunkFilePath = `${chunkDir}/${fileName}.part_${i}`;
+        const chunkBuffer = await fs.promises.readFile(chunkFilePath);
+        writeStream.write(chunkBuffer);
+        fs.unlinkSync(chunkFilePath); // Delete the individual chunk file after merging
+    }
+
+    writeStream.end();
+    console.log("Chunks merged successfully");
+};
+// export const initVideoUpload = async (req, res) => {
+//     const videoObjectId = generateRandomString(11);
+//     const { currentVideoDir, tempDir, segmentsDir, thumbnailDir, chunksDir } = await _staticPath._generateVideoPath(videoObjectId).generateVideContentPath();
+//     return res.json({ currentVideoDir, tempDir, segmentsDir, thumbnailDir, chunksDir})
+// }
+
+export const handleChunks = async (req, res) => {
+    //Tạo ra thư mục dựa vào objectID được ramdom ra
+    const videoObjectId = req.body.videoObjectId;
+
+    const chunkNumber = Number(req.params.chunkNumber);
+
+    if (!videoObjectId) {
+        return res.status(400).json({ message: "Không tìm thấy videoObjectID" })
+    }
+    const { chunksDir, tempDir } = await _staticPath._generateVideoPath(videoObjectId).generateVideContentPath();
+    //
+    //Lấy dữ liệu cần có từ req
+    const uploadedFile = req.file;
+    const fileName = converseFileOriginalName(req.body.originalname)
+
+    const chunk = uploadedFile.buffer;
+    const totalChunks = Number(req.body.totalChunks);
+
+    //
+    // return console.log({chunkNumber})
+    const chunkFilePath = `${chunksDir}/${fileName}.part_${chunkNumber}`;
+    try {
+        await fs.promises.writeFile(chunkFilePath, chunk);
+        console.log(`Chunk ${chunkNumber}/${totalChunks} saved`);
+
+        if (chunkNumber === totalChunks - 1) {
+            // If this is the last chunk, merge all chunks into a single file
+            await mergeChunks(fileName, totalChunks, chunksDir, tempDir);
+            console.log("File merged successfully");
+        }
+
+        res.status(200).json({ message: "Chunk uploaded successfully", videoObjectId });
+    } catch (error) {
+        console.error("Error saving chunk:", error);
+        res.status(500).json({ error: "Error saving chunk" });
+    }
+}
+
