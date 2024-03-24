@@ -2,6 +2,7 @@ import QuizzModel from "../models/quizz.models";
 import AnswerModel from "../models/answer.model";
 import AppError from '../../utils/appError';
 import { errorCode } from '../../utils/util.helper';
+import sequelize from "../models/db";
 
 
 export const getAllQuizz = async (req, res, next) => {
@@ -66,32 +67,43 @@ export const createQuizz = async (req, res, next) => {
 //create More quizz
 export const createMoreQuiz = async (req, res, next) => {
     try {
-        const { questions } = req.body; // Gửi một mảng các câu hỏi
+        const { lesson_id, quizzes } = req.body; // Gửi một mảng các câu hỏi
+        const result = await sequelize.transaction(async (t) => {
+            return await Promise.all(quizzes.map(async (questionData, index) => {
 
-        const createdQuizzes = await Promise.all(questions.map(async (questionData) => {
-            const { question, progress, lesson_id, status, answers } = questionData;
-            const newQuiz = await QuizzModel.create({
-                question,
-                progress,
-                lesson_id,
-                status,
-            });
+                const { question, status, answers, answer_type } = questionData;
 
-            if (answers && answers.length > 0) {
+                const newQuiz = await QuizzModel.create({
+                    question,
+                    answer_type,
+                    lesson_id: lesson_id,
+                    status,
+                }, { transaction: t });
+                // return newQuiz
+                console.log("run Question", newQuiz);
+
+                if (answers && answers.length > 0) { }
                 const answerRecords = await AnswerModel.bulkCreate(
                     answers.map((answer) => ({
                         answer: answer.answer,
-                        isCorrect: answer.isCorrect,
+                        isCorrect: answer.is_correct,
                         quizz_id: newQuiz.id,
                         explain: answer.explain,
-                    })
-                ));
-            }
+                    })), { transaction: t }
+                );
 
-            return newQuiz;
-        }));
 
-        return res.status(201).json(createdQuizzes);
+                return {
+                    question: newQuiz.question,
+                    status: newQuiz.status,
+                    answer_type: newQuiz.answer_type,
+                    answers: answerRecords,
+                };
+            }));
+        })
+
+
+        return res.status(201).json(result);
     } catch (error) {
         next(error);
     }

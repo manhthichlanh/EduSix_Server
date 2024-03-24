@@ -30,7 +30,7 @@ export const createVideo = async (req, res) => {
         return res.status(200).json({message: "Đăng tải video thành công!"});
     } catch (error) {
         console.log(error);
-        return res.status(error.statusCode ? error.statusCode : 500).json({ message: error.message })
+        return res.status(500).json({ message: error.message })
     }
 };
 export const getAllVideo = async (req, res) => {
@@ -326,7 +326,6 @@ export const getVideoStreamV2 = async (req, res) => {
         case ".jpg":
             try {
                 const imagePath = handlePath(currentVideoPath + "/thumbnail", fileName).join;
-                console.log({ imagePath })
                 const file = await fs.promises.readFile(imagePath);
                 console.log(file)
                 return res.status(200).send(file);

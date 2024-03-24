@@ -103,10 +103,12 @@ export const uploadFile = async (req, res) => {
 export async function getAllLessonQuizz(req, res, next) {
     try {
         const { lesson_id } = req.params.lesson_id;
+        return console.log({lesson_id})
         const LessonQuizzDoc = await QuizzModel.findAll({
-            where: lesson_id, include: [{
-                model: LessonModel
-            }]
+            where: lesson_id,
+            //  include: [{
+            //     model: LessonModel
+            // }]
         });
         res.json(LessonQuizzDoc);
     } catch (error) {

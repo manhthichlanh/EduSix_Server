@@ -4,23 +4,29 @@ import fs from "fs";
 import LessonModel from "../src/app/models/lesson.model";
 import { converseFileOriginalName, findVideoDuration, generateRandomString, getAndDeleteHLSFile, switchAction } from "../src/utils/util.helper";
 import { fetchYoutube } from "../src/utils/googleAPI";
+import VideoModel from "../src/app/models/video.model";
 export const checkRequestVideo = async (req, res, next) => {
-    const { lesson_id, youtube_id, lesson_type } = req.body;
+    const { lesson_id, originalname, youtube_id, lesson_type } = req.body;
+    if (!lesson_id || !lesson_type) return res.status(400).json({ message: "Vui lòng xác nhận bài học" });
     if (lesson_type >= 3 && lesson_type < 0 && Number.isInteger(Number(lesson_type))) return res.status(400).json({ message: "Lesson_type khi đăng tải video là 0 và 1!" })
-    const uploadedFile = req.file;
+    const uploadedFile = req.file || originalname;
     // Kiểm tra điều kiện 1: Chỉ có một trong hai được null
     if ((!uploadedFile && !youtube_id) || (uploadedFile && youtube_id)) {
         return res.status(400).json({ error: 'Bạn phải upload file video hoặc có youtube_id và chỉ được chọn 1 trong 2!' });
     }
 
     const record = await LessonModel.findByPk(lesson_id);
-    console.log(record)
     let duration = 0;
     try {
         if (record) {
-            console.log("cóa")
+            const existVideoInLesson = await VideoModel.findOne({where: {
+                lesson_id
+            }});
+            if (existVideoInLesson) return res.status(400).json({message: "Bài học đã có nội dung video bên trong"})
             switch (parseInt(lesson_type)) {
                 case 0:
+                    if (!uploadedFile) return res.status(415).json({ message: "Vui lòng cung cấp dữ liệu file_videos theo đúng yêu cầu của bải học", lesson_type })
+                    break;
                     if (!youtube_id) return res.status(415).json({ message: "Vui lòng cung cấp dữ liệu youtube_id theo đúng yêu cầu của bài học", lesson_type });
                     await fetchYoutube(youtube_id)
                         .then(res => {
@@ -31,15 +37,9 @@ export const checkRequestVideo = async (req, res, next) => {
                             return res.status(402).json({ message: "Chưa thể xác định được thông tin từ youtube_id bạn cung cấp!" })
                         })
                     break;
-                case 1:
-                    if (!uploadedFile) return res.status(415).json({ message: "Vui lòng cung cấp dữ liệu file_videos theo đúng yêu cầu của bải học", lesson_type })
-                    console.log("fff")
-                    duration = findVideoDuration(uploadedFile?.buffer);
-                    console.log({ duration })
-                    break;
                 default:
                     return res.status(401).json({ message: "Bài học không hỗ trợ đăng tải video!" })
-
+                case 1:
             }
             console.log(duration)
             req.body.duration = duration;
@@ -224,7 +224,6 @@ export const encodeVideoToHLS = async (req, res, next) => {
     // const videoPath = StaticPath.handlePath(,fileObjectId).join
     try {
         const inputFilePath = path.join(tempDir, fileName);
-
         console.log(inputFilePath);
         try {
             await fs.promises.writeFile(inputFilePath, uploadedFile?.buffer)
@@ -249,20 +248,14 @@ export const encodeVideoToHLS = async (req, res, next) => {
         return res.status(500).json({ message: error.message })
     }
 }
-export const encodeAlreadyVideoToHLS = async (req, res) => {
+export const encodeAlreadyVideoToHLS = async (req, res, next) => {
     const { videoObjectId, fileName } = req.body;
-    const { videosDir, tempDir, segmentsDir, thumbnailDir } = await _staticPath._generateVideoPath(videoObjectId)
-    try {
-        const inputFilePath = path.join(tempDir, fileName);
 
-        console.log(inputFilePath);
-        try {
-            await fs.promises.writeFile(inputFilePath, uploadedFile?.buffer)
-        } catch (error) {
-            return res.status("500").json(error.message)
-        }
+    const { videosDir, tempDir, segmentsDir, thumbnailDir } = await _staticPath._generateVideoPath(videoObjectId).info;
+
+    try {
+        const inputFilePath = path.join(tempDir, converseFileOriginalName(fileName));
         const m3u8FilePath = path.join(videosDir, "master.m3u8");
-        console.log(m3u8FilePath)
         await screenshotCommand(inputFilePath, thumbnailDir);
         await encodeHLSCommand(inputFilePath, segmentsDir, m3u8FilePath, (command) => {
         })
@@ -270,7 +263,6 @@ export const encodeAlreadyVideoToHLS = async (req, res) => {
                 await fs.promises.unlink(videosDir)
                     .catch(err => console.log(err))
             });
-        req.body.videoObjectId = videoObjectId;
         return next();
     } catch (error) {
         return res.status(500).json({ message: error.message })
@@ -287,7 +279,7 @@ const mergeChunks = async (fileName, totalChunks, chunksDir, tempDir) => {
 
     const writeStream = fs.createWriteStream(`${mergedFilePath}/${fileName}`);
     for (let i = 0; i < totalChunks; i++) {
-        const chunkFilePath = `${chunkDir}/${fileName}.part_${i}`;
+        const chunkFilePath = `${chunkDir}/${fileName}.part_${i + 1}`;
         const chunkBuffer = await fs.promises.readFile(chunkFilePath);
         writeStream.write(chunkBuffer);
         fs.unlinkSync(chunkFilePath); // Delete the individual chunk file after merging
@@ -296,11 +288,7 @@ const mergeChunks = async (fileName, totalChunks, chunksDir, tempDir) => {
     writeStream.end();
     console.log("Chunks merged successfully");
 };
-// export const initVideoUpload = async (req, res) => {
-//     const videoObjectId = generateRandomString(11);
-//     const { currentVideoDir, tempDir, segmentsDir, thumbnailDir, chunksDir } = await _staticPath._generateVideoPath(videoObjectId).generateVideContentPath();
-//     return res.json({ currentVideoDir, tempDir, segmentsDir, thumbnailDir, chunksDir})
-// }
+
 
 export const handleChunks = async (req, res) => {
     //Tạo ra thư mục dựa vào objectID được ramdom ra
@@ -327,10 +315,9 @@ export const handleChunks = async (req, res) => {
         await fs.promises.writeFile(chunkFilePath, chunk);
         console.log(`Chunk ${chunkNumber}/${totalChunks} saved`);
 
-        if (chunkNumber === totalChunks - 1) {
+        if (chunkNumber === totalChunks) {
             // If this is the last chunk, merge all chunks into a single file
             await mergeChunks(fileName, totalChunks, chunksDir, tempDir);
-            console.log("File merged successfully");
         }
 
         res.status(200).json({ message: "Chunk uploaded successfully", videoObjectId });

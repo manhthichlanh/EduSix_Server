@@ -47,6 +47,7 @@ export const findVideoDuration = (buffer) => {
     return movieLength
 }
 
+
 export const getAndDeleteHLSFile = async (m3u8FilePath, segmentFilePath) => {
     const m3u8Content = await fs.promises.readFile(m3u8FilePath, 'utf8');
     console.log(m3u8Content)

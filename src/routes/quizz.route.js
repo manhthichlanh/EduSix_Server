@@ -14,5 +14,5 @@ export default function initQuizzRoute(app) {
     router.get("/getAllQuizz/:lesson_id",initQuizz.getAllQuizz);
     router.get("/getDetailQuizz/:id",initQuizz.getDetailQuizz);
 
-    app.use("/quizz", router);
+    app.use("/quizzes", router);
 }
