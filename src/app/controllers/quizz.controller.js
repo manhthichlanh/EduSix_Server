@@ -72,7 +72,7 @@ export const createMoreQuiz = async (req, res, next) => {
             return await Promise.all(quizzes.map(async (questionData, index) => {
 
                 const { question, status, answers, answer_type } = questionData;
-
+                console.log({ question, status, answers, answer_type })
                 const newQuiz = await QuizzModel.create({
                     question,
                     answer_type,
@@ -86,7 +86,7 @@ export const createMoreQuiz = async (req, res, next) => {
                 const answerRecords = await AnswerModel.bulkCreate(
                     answers.map((answer) => ({
                         answer: answer.answer,
-                        isCorrect: answer.is_correct,
+                        isCorrect: answer.isCorrect,
                         quizz_id: newQuiz.id,
                         explain: answer.explain,
                     })), { transaction: t }
